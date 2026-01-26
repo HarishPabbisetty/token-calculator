@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Visual Token Counter</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .token-badge { display: inline-block; padding: 0 2px; border-radius: 3px; margin: 1px; line-height: 1.2; }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen p-8">
+    <div class="max-w-4xl mx-auto space-y-6">
+        <div class="bg-white p-6 rounded-xl shadow-md">
+            <h1 class="text-2xl font-bold mb-4">Token Visualizer (GPT-4)</h1>
+            <textarea id="input" class="w-full h-40 p-4 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none" placeholder="Type something to see it break into tokens..."></textarea>
+            
+            <div class="flex gap-6 mt-4">
+                <div class="text-lg">Tokens: <span id="t-count" class="font-bold text-indigo-600">0</span></div>
+                <div class="text-lg">Characters: <span id="c-count" class="font-bold text-gray-600">0</span></div>
+            </div>
+        </div>
+
+        <div class="bg-white p-6 rounded-xl shadow-md">
+            <h2 class="text-sm font-semibold uppercase text-gray-400 mb-4">Visual Breakdown</h2>
+            <div id="visualizer" class="p-4 bg-gray-50 rounded-lg min-h-[100px] font-mono whitespace-pre-wrap break-words"></div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { encoding_for_model } from "https://esm.sh/js-tiktoken";
+        const enc = encoding_for_model("gpt-4");
+        const colors = ['#fee2e2', '#fef3c7', '#dcfce7', '#dbeafe', '#f3e8ff', '#fae8ff'];
+
+        const input = document.getElementById('input');
+        const visualizer = document.getElementById('visualizer');
+        const tCount = document.getElementById('t-count');
+        const cCount = document.getElementById('c-count');
+
+        input.addEventListener('input', () => {
+            const text = input.value;
+            const tokens = enc.encode(text);
+            
+            tCount.innerText = tokens.length;
+            cCount.innerText = text.length;
+
+            // To visualize, we decode each token ID individually
+            visualizer.innerHTML = '';
+            tokens.forEach((tokenId, index) => {
+                const chunk = enc.decode([tokenId]);
+                const span = document.createElement('span');
+                span.className = 'token-badge';
+                span.style.backgroundColor = colors[index % colors.length];
+                span.innerText = chunk;
+                visualizer.appendChild(span);
+            });
+        });
+    </script>
+</body>
+</html>
