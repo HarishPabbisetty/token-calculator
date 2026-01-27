@@ -6,7 +6,6 @@ title: AI Token Counter
 <style>
   /* 1. Fluid Typography & Global Scaling */
   :root {
-    /* Font size scales between 14px and 16px based on screen width */
     --base-font: clamp(14px, 1.2vw, 16px);
     --header-font: clamp(20px, 2.5vw, 28px);
     --stat-font: clamp(24px, 3vw, 36px);
@@ -22,7 +21,7 @@ title: AI Token Counter
   /* 2. Responsive Stats Grid */
   .stats-grid { 
     display: grid; 
-    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); 
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); 
     gap: 12px; 
     margin-bottom: 20px; 
   }
@@ -40,40 +39,45 @@ title: AI Token Counter
   .control-bar { display: flex; gap: 10px; margin-bottom: 10px; justify-content: flex-end; }
   .action-btn { 
     background: #fff; border: 1px solid #d1d5da; padding: 6px 12px; 
-    border-radius: 6px; font-size: 0.85rem; cursor: pointer; 
+    border-radius: 6px; font-size: 0.85rem; cursor: pointer; font-weight: 600;
   }
+  .action-btn:hover { background: #f6f8fa; border-color: #1b1f23; }
   
   textarea#token-input {
     width: 100%; padding: 15px; border: 1px solid #d1d5da; border-radius: 8px;
     font-size: 1rem; line-height: 1.5; background-color: #fff; 
     min-height: 150px; box-sizing: border-box;
+    /* Modern CSS: grows with content */
+    field-sizing: content;
   }
 
   /* 4. Responsive Pricing Table */
   .price-header { margin-top: 25px; margin-bottom: 10px; font-size: 0.8rem; font-weight: bold; color: #586069; text-transform: uppercase; }
   .price-container { border: 1px solid #e1e4e8; border-radius: 8px; overflow-x: auto; background: #fff; }
-  table { width: 100%; border-collapse: collapse; min-width: 300px; }
+  table { width: 100%; border-collapse: collapse; min-width: 450px; }
   th { background: #f6f8fa; text-align: left; padding: 12px; color: #586069; border-bottom: 1px solid #e1e4e8; font-size: 0.85rem; }
-  td { padding: 12px; border-bottom: 1px solid #f6f8fa; font-size: 0.95rem; }
-  .cost-val { font-family: monospace; font-weight: bold; color: #28a745; text-align: right; }
+  td { padding: 10px 12px; border-bottom: 1px solid #f6f8fa; font-size: 0.9rem; }
+  .cost-val { font-family: "SFMono-Regular", Consolas, monospace; font-weight: bold; color: #28a745; text-align: right; }
+  .cost-out { color: #0366d6; }
 
   /* 5. Token Visualizer */
   #visualizer {
     background: #24292e; padding: 20px; border-radius: 10px; margin-top: 20px;
-    display: flex; flex-wrap: wrap; gap: 8px 5px; min-height: 60px;
+    display: flex; flex-wrap: wrap; gap: 8px 5px; min-height: 20px;
   }
+  /* Hide visualizer when empty */
+  #visualizer:empty { display: none; }
+
   .token-box {
-    color: #1a1a1a; padding: 3px 8px; border-radius: 4px;
+    color: #1a1a1a; padding: 2px 6px; border-radius: 4px;
     font-family: "SFMono-Regular", Consolas, monospace; 
-    font-size: 0.85rem; font-weight: 700;
+    font-size: 0.8rem; font-weight: 700;
     white-space: pre-wrap; display: inline-block; line-height: 1.4 !important;
   }
 
-  /* Mobile Tweaks */
   @media (max-width: 600px) {
     .stats-grid { grid-template-columns: 1fr; }
-    th, td { padding: 8px; }
-    .cost-val { font-size: 0.85rem; }
+    th, td { padding: 8px; font-size: 0.8rem; }
   }
 </style>
 
@@ -97,17 +101,17 @@ title: AI Token Counter
   <button class="action-btn" style="color:#d73a49; border-color:#f5b0b0;" onclick="clearAll()">Clear</button>
 </div>
 
-<textarea id="token-input" placeholder="Paste text here..."></textarea>
+<textarea id="token-input" placeholder="Paste your prompt or text here..."></textarea>
 
-<div class="price-header">Estimated Costs (USD)</div>
+<div class="price-header">2026 Model Pricing Comparison (USD)</div>
 
 <div class="price-container">
   <table>
     <thead>
       <tr>
         <th>Model</th>
-        <th style="text-align: right;">Input</th>
-        <th style="text-align: right;">Output</th>
+        <th style="text-align: right;">Input Cost</th>
+        <th style="text-align: right;">Output Cost</th>
       </tr>
     </thead>
     <tbody id="price-table-body"></tbody>
@@ -120,16 +124,27 @@ title: AI Token Counter
 
 <script>
   let currentTokenCount = 0;
+  
+  // Prices per 1 Million Tokens (Latest 2026 estimates)
   const models = [
     { name: "GPT-4o", input: 2.50, output: 10.00 },
+    { name: "o1-preview", input: 15.00, output: 60.00 },
     { name: "GPT-4o mini", input: 0.15, output: 0.60 },
     { name: "Claude 3.5 Sonnet", input: 3.00, output: 15.00 },
-    { name: "Gemini 1.5 Flash", input: 0.075, output: 0.30 }
+    { name: "Claude 3.5 Haiku", input: 0.25, output: 1.25 },
+    { name: "Gemini 1.5 Pro", input: 1.25, output: 5.00 },
+    { name: "Gemini 1.5 Flash", input: 0.075, output: 0.30 },
+    { name: "DeepSeek-V3", input: 0.14, output: 0.28 },
+    { name: "Llama 3.1 405B", input: 2.00, output: 6.00 }
   ];
 
-  function clearAll() { document.getElementById('token-input').value = ''; updateUI(''); }
+  function clearAll() { 
+    document.getElementById('token-input').value = ''; 
+    updateUI(''); 
+  }
+  
   function showExample() { 
-    const ex = "Modern LLMs process text in 'tokens'. On average, 1,000 tokens equal roughly 750 words. This calculator helps you budget your AI usage!";
+    const ex = "This tool helps developers compare costs across OpenAI, Anthropic, Google, and Meta models. It runs entirely in your browser!";
     document.getElementById('token-input').value = ex; 
     updateUI(ex); 
   }
@@ -148,7 +163,7 @@ title: AI Token Counter
       tableBody.innerHTML += `<tr>
         <td><strong>${m.name}</strong></td>
         <td class="cost-val">${formatPrice(inputCost)}</td>
-        <td class="cost-val" style="color:#0366d6;">${formatPrice(outputCost)}</td>
+        <td class="cost-val cost-out">${formatPrice(outputCost)}</td>
       </tr>`;
     });
   }
@@ -163,6 +178,8 @@ title: AI Token Counter
     
     const visualizer = document.getElementById('visualizer');
     visualizer.innerHTML = '';
+    if (tokens.length === 0) return;
+
     const colors = ['#818cf8', '#fbbf24', '#34d399', '#f87171', '#a78bfa', '#22d3ee'];
     tokens.forEach((id, i) => {
       const div = document.createElement('div');
