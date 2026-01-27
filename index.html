@@ -4,197 +4,65 @@ title: AI Token Counter
 ---
 
 <style>
-  /* 1. Fluid Typography & Global Scaling */
   :root {
     --base-font: clamp(14px, 1.2vw, 16px);
     --stat-font: clamp(24px, 3vw, 36px);
   }
 
   section { 
-    max-width: 900px !important; 
-    margin: 0 auto !important; 
-    padding: 15px !important; 
+    max-width: 900px !important; margin: 0 auto !important; padding: 15px !important; 
     font-size: var(--base-font);
   }
   
-  /* 2. Stats Grid */
   .stats-grid { 
-    display: grid; 
-    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); 
-    gap: 12px; 
-    margin-bottom: 20px; 
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); 
+    gap: 12px; margin-bottom: 20px; 
   }
   .stat-card { 
-    padding: 15px; 
-    border-radius: 10px; 
-    text-align: center; 
-    border: 1px solid #e1e4e8; 
-    background: #fafbfc; 
+    padding: 15px; border-radius: 10px; text-align: center; 
+    border: 1px solid #e1e4e8; background: #fafbfc; 
   }
-  .stat-label { color: #586069; font-size: 0.75rem; font-weight: bold; text-transform: uppercase; margin-bottom: 5px; }
-  .stat-val { font-size: var(--stat-font); font-weight: 800; color: #24292e; line-height: 1; }
+  .stat-label { color: #586069; font-size: 0.75rem; font-weight: bold; text-transform: uppercase; }
+  .stat-val { font-size: var(--stat-font); font-weight: 800; color: #24292e; }
 
-  /* 3. Input Area */
-  .control-bar { display: flex; gap: 10px; margin-bottom: 10px; justify-content: flex-end; }
+  .control-bar { display: flex; gap: 10px; margin-bottom: 10px; align-items: center; }
+  #search-box {
+    flex-grow: 1; padding: 8px 12px; border: 1px solid #d1d5da; border-radius: 6px; font-size: 0.9rem;
+  }
   .action-btn { 
     background: #fff; border: 1px solid #d1d5da; padding: 6px 12px; 
     border-radius: 6px; font-size: 0.85rem; cursor: pointer; font-weight: 600;
   }
-  .action-btn:hover { background: #f6f8fa; border-color: #1b1f23; }
   
   textarea#token-input {
     width: 100%; padding: 15px; border: 1px solid #d1d5da; border-radius: 8px;
     font-size: 1rem; line-height: 1.5; background-color: #fff; 
-    min-height: 150px; box-sizing: border-box;
-    field-sizing: content; /* Automatically grows with text */
+    min-height: 150px; box-sizing: border-box; field-sizing: content;
   }
 
-  /* 4. Pricing Table */
-  .price-header { margin-top: 25px; margin-bottom: 10px; font-size: 0.8rem; font-weight: bold; color: #586069; text-transform: uppercase; }
-  .price-container { border: 1px solid #e1e4e8; border-radius: 8px; overflow-x: auto; background: #fff; }
+  .price-container { border: 1px solid #e1e4e8; border-radius: 8px; overflow-x: auto; background: #fff; margin-top: 10px; }
   table { width: 100%; border-collapse: collapse; min-width: 450px; }
   th { background: #f6f8fa; text-align: left; padding: 12px; color: #586069; border-bottom: 1px solid #e1e4e8; font-size: 0.85rem; }
   td { padding: 10px 12px; border-bottom: 1px solid #f6f8fa; font-size: 0.9rem; }
-  .cost-val { font-family: "SFMono-Regular", Consolas, monospace; font-weight: bold; color: #28a745; text-align: right; }
+  .cost-val { font-family: monospace; font-weight: bold; color: #28a745; text-align: right; }
   .cost-out { color: #0366d6; }
 
-  /* 5. Token Visualizer */
   #visualizer {
     background: #24292e; padding: 20px; border-radius: 10px; margin-top: 20px;
-    display: flex; flex-wrap: wrap; gap: 8px 5px; min-height: 20px;
+    display: flex; flex-wrap: wrap; gap: 8px 5px;
   }
   #visualizer:empty { display: none; }
-
   .token-box {
-    color: #1a1a1a; padding: 2px 6px; border-radius: 4px;
-    font-family: "SFMono-Regular", Consolas, monospace; 
-    font-size: 0.8rem; font-weight: 700;
-    white-space: pre-wrap; display: inline-block; line-height: 1.4 !important;
-  }
-
-  @media (max-width: 600px) {
-    .stats-grid { grid-template-columns: 1fr; }
+    color: #1a1a1a; padding: 2px 6px; border-radius: 4px; font-family: monospace; 
+    font-size: 0.8rem; font-weight: 700; white-space: pre-wrap;
   }
 </style>
 
 <div class="stats-grid">
-  <div class="stat-card">
-    <div class="stat-label">Tokens</div>
-    <div id="t-count" class="stat-val">0</div>
-  </div>
-  <div class="stat-card">
-    <div class="stat-label">Words</div>
-    <div id="w-count" class="stat-val">0</div>
-  </div>
-  <div class="stat-card">
-    <div class="stat-label">Chars</div>
-    <div id="c-count" class="stat-val">0</div>
-  </div>
+  <div class="stat-card"><div class="stat-label">Tokens</div><div id="t-count" class="stat-val">0</div></div>
+  <div class="stat-card"><div class="stat-label">Words</div><div id="w-count" class="stat-val">0</div></div>
+  <div class="stat-card"><div class="stat-label">Chars</div><div id="c-count" class="stat-val">0</div></div>
 </div>
 
 <div class="control-bar">
-  <button class="action-btn" onclick="showExample()">Example</button>
-  <button class="action-btn" style="color:#d73a49; border-color:#f5b0b0;" onclick="clearAll()">Clear</button>
-</div>
-
-<textarea id="token-input" placeholder="Paste your text here..."></textarea>
-
-<div class="price-header">Model Pricing Comparison (USD)</div>
-<div class="price-container">
-  <table>
-    <thead>
-      <tr>
-        <th>Model</th>
-        <th style="text-align: right;">Input Cost</th>
-        <th style="text-align: right;">Output Cost</th>
-      </tr>
-    </thead>
-    <tbody id="price-table-body">
-      <tr><td colspan="3" style="text-align:center; padding:20px; color:#6a737d;">Loading model data...</td></tr>
-    </tbody>
-  </table>
-</div>
-
-<div id="visualizer"></div>
-
-<script src="https://unpkg.com/gpt-tokenizer/dist/cl100k_base.js"></script>
-
-<script>
-  let currentTokenCount = 0;
-  let modelData = [];
-
-  // Load configuration from external JSON
-  async function init() {
-    try {
-      const response = await fetch('models.json');
-      if (!response.ok) throw new Error('Network response was not ok');
-      modelData = await response.json();
-      renderPricing();
-    } catch (err) {
-      console.error("Error loading models.json:", err);
-      document.getElementById('price-table-body').innerHTML = 
-        '<tr><td colspan="3" style="text-align:center; color:#d73a49;">Error loading model data. Please ensure models.json exists.</td></tr>';
-    }
-  }
-
-  function clearAll() { 
-    document.getElementById('token-input').value = ''; 
-    updateUI(''); 
-  }
-  
-  function showExample() { 
-    const ex = "This calculator uses an external models.json file to manage pricing for GPT-4, Claude, Gemini, and more.";
-    document.getElementById('token-input').value = ex; 
-    updateUI(ex); 
-  }
-
-  function formatPrice(val) {
-    if (val === 0) return "$0.00";
-    return val < 0.0001 ? "$" + val.toFixed(7) : "$" + val.toFixed(5);
-  }
-
-  function renderPricing() {
-    const tableBody = document.getElementById('price-table-body');
-    if (!tableBody || modelData.length === 0) return;
-
-    tableBody.innerHTML = '';
-    modelData.forEach(m => {
-      const inputCost = (currentTokenCount / 1000000) * m.input;
-      const outputCost = (currentTokenCount / 1000000) * m.output;
-      tableBody.innerHTML += `<tr>
-        <td><strong>${m.name}</strong></td>
-        <td class="cost-val">${formatPrice(inputCost)}</td>
-        <td class="cost-val cost-out">${formatPrice(outputCost)}</td>
-      </tr>`;
-    });
-  }
-
-  function updateUI(text) {
-    const tokens = text ? GPTTokenizer_cl100k_base.encode(text) : [];
-    currentTokenCount = tokens.length;
-    
-    document.getElementById('t-count').innerText = currentTokenCount.toLocaleString();
-    document.getElementById('w-count').innerText = text.trim() ? text.trim().split(/\s+/).length.toLocaleString() : 0;
-    document.getElementById('c-count').innerText = text.length.toLocaleString();
-    
-    renderPricing();
-    
-    const visualizer = document.getElementById('visualizer');
-    visualizer.innerHTML = '';
-    if (tokens.length === 0) return;
-
-    const colors = ['#818cf8', '#fbbf24', '#34d399', '#f87171', '#a78bfa', '#22d3ee'];
-    tokens.forEach((id, i) => {
-      const div = document.createElement('div');
-      div.className = 'token-box';
-      div.style.backgroundColor = colors[i % colors.length];
-      div.textContent = GPTTokenizer_cl100k_base.decode([id]);
-      visualizer.appendChild(div);
-    });
-  }
-
-  document.getElementById('token-input').addEventListener('input', (e) => updateUI(e.target.value));
-
-  // Boot the app
-  init();
-</script>
+  <input type="text" id="search-box" placeholder="Filter models (e.g.
