@@ -6,7 +6,8 @@
     <title>GPT Token Cost Calculator</title>
     <style>
         :root {
-            --sidebar-w: 280px; --brand: #2563eb; --bg-app: #f8fafc;
+            --sidebar-w: 220px; /* SHRUNKEN SIDEBAR */
+            --brand: #2563eb; --bg-app: #f8fafc;
             --card-bg: #ffffff; --text-main: #1e293b; --text-muted: #64748b;
             --border: #e2e8f0; --accent-bg: #f0f7ff;
             --t1: #dbeafe; --t2: #fef3c7; --t3: #dcfce7; --t4: #f3e8ff;
@@ -18,14 +19,16 @@
             }
         }
         
-        body { margin: 0; font-family: 'Inter', system-ui, sans-serif; background: var(--bg-app); color: var(--text-main); -webkit-font-smoothing: antialiased; }
+        body { margin: 0; font-family: 'Inter', system-ui, sans-serif; background: var(--bg-app); color: var(--text-main); }
 
-        /* FIX: Flex-box ensures sidebar NEVER overlaps main content */
-        .app-container { display: flex; min-height: 100vh; width: 100%; }
+        /* THE FIX: Flex container ensures sidebar and main are siblings, not overlapping */
+        .app-container { display: flex; min-height: 100vh; width: 100%; overflow-x: hidden; }
 
         aside {
-            width: var(--sidebar-w); min-width: var(--sidebar-w); background: var(--card-bg); border-right: 1px solid var(--border);
-            display: flex; flex-direction: column; padding: 24px; box-sizing: border-box; transition: transform 0.3s ease;
+            width: var(--sidebar-w); min-width: var(--sidebar-w); /* Fixed width "Wall" */
+            background: var(--card-bg); border-right: 1px solid var(--border);
+            display: flex; flex-direction: column; padding: 16px; box-sizing: border-box;
+            height: 100vh; position: sticky; top: 0;
         }
 
         @media (max-width: 1023px) {
@@ -33,111 +36,97 @@
             aside.open { transform: translateX(0); }
         }
 
-        .main-content { flex-grow: 1; min-width: 0; display: flex; flex-direction: column; }
+        .main-content { 
+            flex: 1; min-width: 0; /* Allows main to shrink without pushing sidebar */
+            display: flex; flex-direction: column; 
+        }
 
         header {
-            height: 70px; background: var(--card-bg); border-bottom: 1px solid var(--border);
-            display: flex; align-items: center; padding: 0 24px; justify-content: space-between; position: sticky; top: 0; z-index: 1000;
+            height: 60px; background: var(--card-bg); border-bottom: 1px solid var(--border);
+            display: flex; align-items: center; padding: 0 20px; justify-content: space-between;
         }
 
-        main { padding: 24px; box-sizing: border-box; width: 100%; max-width: 1600px; margin: 0 auto; }
+        main { padding: 20px; box-sizing: border-box; width: 100%; }
         
-        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 24px; }
-        .glass-card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 12px; padding: 16px; margin-bottom: 20px; }
+        /* Stats & Layout */
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin-bottom: 20px; }
+        .glass-card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 10px; padding: 16px; }
 
-        .workspace-layout { display: grid; grid-template-columns: 1fr; gap: 24px; }
-        @media (min-width: 1280px) { .workspace-layout { grid-template-columns: 1fr 450px; } }
+        .workspace-layout { display: grid; grid-template-columns: 1fr; gap: 20px; }
+        @media (min-width: 1200px) { .workspace-layout { grid-template-columns: 1fr 380px; } }
 
         textarea {
-            width: 100%; min-height: 300px; padding: 18px; border-radius: 12px; border: 1px solid var(--border);
-            background: var(--bg-app); color: var(--text-main); font-size: 16px; line-height: 1.6; outline: none; box-sizing: border-box;
+            width: 100%; min-height: 250px; padding: 15px; border-radius: 10px; border: 1px solid var(--border);
+            background: var(--bg-app); color: var(--text-main); font-size: 15px; resize: vertical; box-sizing: border-box;
         }
 
-        table { width: 100%; border-collapse: collapse; font-size: 13px; }
-        td, th { padding: 12px; border-bottom: 1px solid var(--border); text-align: left; }
-        .num { font-family: monospace; text-align: right; font-weight: 500; }
-        .model-link { color: var(--brand); cursor: pointer; text-decoration: underline; text-underline-offset: 3px; }
+        /* Table Styles */
+        table { width: 100%; border-collapse: collapse; font-size: 12px; }
+        th { text-align: left; padding: 10px; color: var(--text-muted); border-bottom: 1px solid var(--border); }
+        td { padding: 10px; border-bottom: 1px solid var(--border); }
+        .num { font-family: monospace; text-align: right; }
+        .model-name { color: var(--brand); cursor: pointer; text-decoration: underline; }
 
-        /* MODAL STYLES */
-        .modal-overlay { 
-            position: fixed; inset: 0; background: rgba(0,0,0,0.5); backdrop-filter: blur(4px); 
-            display: none; align-items: center; justify-content: center; z-index: 3000; 
-        }
-        .modal-overlay.active { display: flex; }
-        .modal { 
-            background: var(--card-bg); padding: 32px; border-radius: 20px; max-width: 400px; width: 90%; 
-            box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); border: 1px solid var(--border);
-        }
+        /* Modal */
+        .modal-bg { position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: none; align-items: center; justify-content: center; z-index: 3000; }
+        .modal-bg.active { display: flex; }
+        .modal { background: var(--card-bg); padding: 24px; border-radius: 12px; width: 320px; border: 1px solid var(--border); }
 
-        .token-span { padding: 2px 4px; border-radius: 4px; margin: 1px; display: inline-block; font-family: monospace; font-size: 12px; }
-        .btn { padding: 8px 14px; border-radius: 8px; border: 1px solid var(--border); background: var(--card-bg); color: var(--text-main); font-weight: 500; cursor: pointer; }
+        .btn { padding: 6px 12px; border-radius: 6px; border: 1px solid var(--border); background: var(--card-bg); cursor: pointer; font-size: 13px; }
+        .token-span { padding: 2px 4px; border-radius: 4px; margin: 1px; display: inline-block; font-family: monospace; font-size: 11px; }
     </style>
 </head>
 <body>
 
-<div id="modal-container" class="modal-overlay" onclick="closeModal()">
+<div id="info-modal" class="modal-bg" onclick="this.classList.remove('active')">
     <div class="modal" onclick="event.stopPropagation()">
-        <h3 id="m-name" style="margin-top:0; color:var(--brand);">Model Details</h3>
-        <hr style="border:0; border-top:1px solid var(--border); margin:15px 0;">
-        <p><strong>Context Window:</strong> <span id="m-context">--</span> tokens</p>
-        <p><strong>Max Output:</strong> <span id="m-output-max">--</span> tokens</p>
-        <p><strong>Training Cutoff:</strong> <span id="m-cutoff">--</span></p>
-        <button class="btn" style="width:100%; margin-top:10px;" onclick="closeModal()">Close</button>
+        <h3 id="m-title" style="margin:0 0 10px 0;">Model Info</h3>
+        <p id="m-desc" style="font-size:13px; color:var(--text-muted);"></p>
+        <button class="btn" style="width:100%" onclick="document.getElementById('info-modal').classList.remove('active')">Close</button>
     </div>
 </div>
 
 <div class="app-container">
     <aside id="sidebar">
-        <h2 style="color:var(--brand); margin:0;">GPT Calc</h2>
-        <div id="history-list" style="flex:1; overflow-y:auto; margin: 20px 0;"></div>
-        <button class="btn" style="background:var(--brand); color:white; border:none; margin-bottom:8px;" onclick="saveToHistory()">💾 Save Workspace</button>
-        <button class="btn" style="color:#ef4444" onclick="clearHistory()">🗑 Clear History</button>
+        <h3 style="margin:0 0 15px 0;">GPT Calc</h3>
+        <div id="history-list" style="flex:1; overflow-y:auto; font-size:11px;"></div>
+        <button class="btn" style="background:var(--brand); color:white; border:none; margin-bottom:5px;" onclick="saveToHistory()">Save</button>
+        <button class="btn" style="color:red" onclick="clearHistory()">Clear All</button>
     </aside>
 
     <div class="main-content">
         <header>
-            <div style="display:flex; align-items:center; gap:12px;">
-                <button class="btn" onclick="toggleMenu()" id="mobile-btn">☰</button>
-                <select id="task-preset" onchange="renderPricing()" class="btn">
-                    <option value="1">Ratio 1:1 (Chat)</option>
-                    <option value="0.2">Ratio 1:0.2 (Summarization)</option>
-                    <option value="5">Ratio 1:5 (Creative)</option>
+            <div style="display:flex; gap:10px;">
+                <button class="btn" onclick="document.getElementById('sidebar').classList.toggle('open')">☰</button>
+                <select id="ratio" onchange="calculate()" class="btn">
+                    <option value="1">1:1 Chat</option>
+                    <option value="0.3">1:0.3 Summary</option>
+                    <option value="5">1:5 Content</option>
                 </select>
             </div>
-            <div style="display:flex; gap:8px;">
-                <button class="btn" onclick="showExample()">🎭 Joke Example</button>
-                <button class="btn" onclick="clearEditor()" style="color:#ef4444">Clear</button>
-                <select id="currency-select" onchange="changeCurrency(this.value)" class="btn">
-                    <option value="USD">USD</option><option value="EUR">EUR</option><option value="INR">INR</option>
+            <div style="display:flex; gap:10px;">
+                <button class="btn" onclick="jokeExample()">🎭 Humor</button>
+                <select id="curr" onchange="calculate()" class="btn">
+                    <option value="USD">$ USD</option><option value="EUR">€ EUR</option>
                 </select>
             </div>
         </header>
 
         <main>
             <div class="stats-grid">
-                <div class="glass-card">
-                    <small style="font-weight:700; color:var(--text-muted)">INPUT TOKENS</small>
-                    <div id="t-count" style="font-size:28px; font-weight:800; margin-top:5px;">0</div>
-                </div>
-                <div class="glass-card" style="border-left:4px solid var(--brand);">
-                    <small style="font-weight:700; color:var(--text-muted)">TOTAL PROJECTED COST</small>
-                    <div id="avg-cost" style="font-size:28px; font-weight:800; color:var(--brand); margin-top:5px;">$0.00</div>
-                </div>
+                <div class="glass-card"><small>TOKENS IN</small><div id="in-count" style="font-size:22px; font-weight:700;">0</div></div>
+                <div class="glass-card"><small>SUM (IN+OUT)</small><div id="total-cost" style="font-size:22px; font-weight:700; color:var(--brand);">$0.00</div></div>
             </div>
 
             <div class="workspace-layout">
-                <div class="editor-pane">
-                    <textarea id="token-input" placeholder="Paste your text here..."></textarea>
-                    <div class="glass-card" style="margin-top:20px;">
-                        <div id="visualizer"></div>
-                    </div>
+                <div>
+                    <textarea id="input" placeholder="Paste text here..." oninput="calculate()"></textarea>
+                    <div id="viz" class="glass-card" style="margin-top:15px; min-height:50px;"></div>
                 </div>
-                <div class="glass-card" style="padding:0; overflow-x:auto;">
+                <div class="glass-card" style="padding:0; overflow:hidden;">
                     <table>
-                        <thead>
-                            <tr><th>Model (Click for Info)</th><th class="num">In</th><th class="num">Out</th><th class="num">Total</th></tr>
-                        </thead>
-                        <tbody id="price-table-body"></tbody>
+                        <thead><tr><th>Model</th><th class="num">In</th><th class="num">Out</th><th class="num">Total</th></tr></thead>
+                        <tbody id="table-body"></tbody>
                     </table>
                 </div>
             </div>
@@ -147,115 +136,86 @@
 
 <script src="https://unpkg.com/gpt-tokenizer/dist/cl100k_base.js"></script>
 <script>
-    let currentTokenCount = 0; let modelData = []; let exchangeRates = { USD: 1 };
-    let selectedCurrency = 'USD'; const symbols = { USD: '$', EUR: '€', INR: '₹' };
-
-    const jokes = [
-        "I asked an AI to write a story about a broken calculator. It said, 'It just doesn't add up.'",
-        "Why was the AI cold? It left its Windows open.",
-        "An AI language model walks into a bar... and explains why it can't drink in 10 bullet points.",
-        "Tokenization is like a pizza. Even when it's bad, you're still paying per slice.",
-        "My AI's favorite band? The Neural Network-ing."
+    let models = [
+        {id: "gpt4o", name: "GPT-4o", in: 5, out: 15, info: "128k context. Flagship high-intelligence model."},
+        {id: "gpt4o-mini", name: "GPT-4o Mini", in: 0.15, out: 0.60, info: "128k context. Affordable and fast for simple tasks."},
+        {id: "claude3.5", name: "Claude 3.5 Sonnet", in: 3, out: 15, info: "200k context. Industry leader in coding and reasoning."}
     ];
 
-    async function init() {
-        try {
-            const mRes = await fetch('models.json');
-            modelData = await mRes.json();
-            const rRes = await fetch('https://api.frankfurter.dev/v1/latest?base=USD');
-            const rData = await rRes.json();
-            exchangeRates = { ...exchangeRates, ...rData.rates };
-            renderHistory(); renderPricing();
-        } catch (e) { console.error("Init Error"); }
+    const jokes = [
+        "Why did the AI get fired? It had a 'neural' breakdown.",
+        "An AI walks into a bar. Bartender says, 'We don't serve your kind.' AI says, 'That's okay, I'll just hallucinate a drink.'",
+        "How many AIs does it take to change a lightbulb? One to generate the light and 1,000 to discuss the alignment risks."
+    ];
+
+    function jokeExample() {
+        document.getElementById('input').value = jokes[Math.floor(Math.random() * jokes.length)];
+        calculate();
     }
 
-    function toggleMenu() { document.getElementById('sidebar').classList.toggle('open'); }
-    function changeCurrency(cc) { selectedCurrency = cc; renderPricing(); }
-    function clearEditor() { document.getElementById('token-input').value = ''; updateUI(''); }
-    function clearHistory() { if(confirm("Clear all history?")) { localStorage.removeItem('ai_history'); renderHistory(); } }
-
-    function showModal(modelId) {
-        const m = modelData.find(x => x.id === modelId);
-        if(!m) return;
-        document.getElementById('m-name').innerText = m.name;
-        document.getElementById('m-context').innerText = m.context || "128k";
-        document.getElementById('m-output-max').innerText = m.max_out || "4,096";
-        document.getElementById('m-cutoff').innerText = m.cutoff || "Oct 2023";
-        document.getElementById('modal-container').classList.add('active');
-    }
-    function closeModal() { document.getElementById('modal-container').classList.remove('active'); }
-
-    function showExample() {
-        const joke = jokes[Math.floor(Math.random() * jokes.length)];
-        document.getElementById('token-input').value = joke;
-        updateUI(joke);
-    }
-
-    function formatPrice(usd) {
-        const val = usd * (exchangeRates[selectedCurrency] || 1);
-        return symbols[selectedCurrency] + (val === 0 ? "0.00" : (val < 0.01 ? val.toFixed(4) : val.toLocaleString(undefined, {minimumFractionDigits: 2})));
-    }
-
-    function renderPricing() {
-        const body = document.getElementById('price-table-body');
-        const ratio = parseFloat(document.getElementById('task-preset').value);
-        body.innerHTML = ''; let sumTotal = 0;
+    function calculate() {
+        const text = document.getElementById('input').value;
+        const tokens = text ? GPTTokenizer_cl100k_base.encode(text) : [];
+        const count = tokens.length;
+        const ratio = parseFloat(document.getElementById('ratio').value);
         
-        modelData.forEach(m => {
-            const inC = (currentTokenCount / 1000000) * m.input;
-            const outC = ((currentTokenCount * ratio) / 1000000) * m.output;
-            const total = inC + outC; sumTotal += total;
-
-            body.innerHTML += `<tr>
-                <td><span class="model-link" onclick="showModal('${m.id}')">${m.name}</span></td>
-                <td class="num">${formatPrice(inC)}</td>
-                <td class="num">${formatPrice(outC)}</td>
-                <td class="num" style="background:var(--accent-bg); font-weight:700; color:var(--brand);">${formatPrice(total)}</td>
+        document.getElementById('in-count').innerText = count.toLocaleString();
+        
+        let html = ''; let totalSum = 0;
+        models.forEach(m => {
+            const costIn = (count / 1000000) * m.in;
+            const costOut = ((count * ratio) / 1000000) * m.out;
+            const total = costIn + costOut; // SUM OF IN AND OUT
+            totalSum += total;
+            
+            html += `<tr>
+                <td class="model-name" onclick="showInfo('${m.id}')">${m.name}</td>
+                <td class="num">$${costIn.toFixed(4)}</td>
+                <td class="num">$${costOut.toFixed(4)}</td>
+                <td class="num" style="font-weight:bold">$${total.toFixed(4)}</td>
             </tr>`;
         });
-        document.getElementById('avg-cost').innerText = formatPrice(modelData.length ? sumTotal / modelData.length : 0);
+        
+        document.getElementById('table-body').innerHTML = html;
+        document.getElementById('total-cost').innerText = '$' + (totalSum / models.length).toFixed(4);
+        
+        // Visualizer
+        const viz = document.getElementById('viz');
+        viz.innerHTML = '';
+        tokens.slice(0, 50).forEach((t, i) => {
+            const s = document.createElement('span'); s.className = 'token-span';
+            s.style.background = `var(--t${(i % 4) + 1})`;
+            s.textContent = GPTTokenizer_cl100k_base.decode([t]);
+            viz.appendChild(s);
+        });
     }
 
-    function updateUI(text) {
-        const tokens = text ? GPTTokenizer_cl100k_base.encode(text) : [];
-        currentTokenCount = tokens.length;
-        document.getElementById('t-count').innerText = currentTokenCount.toLocaleString();
-        
-        const vis = document.getElementById('visualizer');
-        vis.innerHTML = '<small style="display:block;margin-bottom:8px;color:var(--text-muted)">Live Token Visualization:</small>';
-        tokens.slice(0, 80).forEach((id, i) => {
-            const span = document.createElement('span'); span.className = 'token-span';
-            span.style.background = `var(--t${(i % 4) + 1})`;
-            span.textContent = GPTTokenizer_cl100k_base.decode([id]);
-            vis.appendChild(span);
-        });
-        renderPricing();
+    function showInfo(id) {
+        const m = models.find(x => x.id === id);
+        document.getElementById('m-title').innerText = m.name;
+        document.getElementById('m-desc').innerText = m.info;
+        document.getElementById('info-modal').classList.add('active');
     }
 
     function saveToHistory() {
-        const text = document.getElementById('token-input').value; if (!text) return;
-        let history = JSON.parse(localStorage.getItem('ai_history') || '[]');
-        history.unshift({ id: Date.now(), text, date: new Date().toLocaleTimeString() });
-        localStorage.setItem('ai_history', JSON.stringify(history.slice(0, 10)));
+        const text = document.getElementById('input').value;
+        if(!text) return;
+        const h = JSON.parse(localStorage.getItem('h') || '[]');
+        h.unshift({t: text, d: new Date().toLocaleTimeString()});
+        localStorage.setItem('h', JSON.stringify(h.slice(0,10)));
         renderHistory();
     }
 
     function renderHistory() {
-        const history = JSON.parse(localStorage.getItem('ai_history') || '[]');
-        document.getElementById('history-list').innerHTML = history.length ? history.map(h => `
-            <div onclick="loadHistory('${h.id}')" style="padding:10px; border:1px solid var(--border); border-radius:8px; cursor:pointer; margin-bottom:8px; font-size:12px; background:var(--card-bg);">
-                <b>${h.date}</b><br><span style="color:var(--text-muted)">${h.text.substring(0, 25)}...</span>
+        const h = JSON.parse(localStorage.getItem('h') || '[]');
+        document.getElementById('history-list').innerHTML = h.map(i => `
+            <div style="padding:5px; border-bottom:1px solid var(--border); cursor:pointer" onclick="document.getElementById('input').value='${i.t.replace(/'/g, "\\'")}';calculate();">
+                <b>${i.d}</b>: ${i.t.substring(0,15)}...
             </div>
-        `).join('') : '<p style="font-size:11px; color:var(--text-muted);">No saved work.</p>';
+        `).join('');
     }
 
-    function loadHistory(id) {
-        const item = JSON.parse(localStorage.getItem('ai_history')).find(h => h.id == id);
-        if (item) { document.getElementById('token-input').value = item.text; updateUI(item.text); }
-    }
-
-    document.getElementById('token-input').addEventListener('input', (e) => updateUI(e.target.value));
-    init();
+    renderHistory();
 </script>
 </body>
 </html>
