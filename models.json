@@ -1,12 +1,12 @@
 [
-  { "name": "GPT-5.2 (Flagship)", "input": 1.25, "output": 10.00 },
+  { "name": "GPT-5 (Flagship)", "input": 1.25, "output": 10.00 },
   { "name": "GPT-5.2 Pro (Reasoning)", "input": 15.00, "output": 120.00 },
   { "name": "o3 (Thinking)", "input": 2.00, "output": 8.00 },
   { "name": "Claude 4.5 Opus", "input": 5.00, "output": 25.00 },
   { "name": "Claude 4.5 Sonnet", "input": 3.00, "output": 15.00 },
-  { "name": "Gemini 3 Pro", "input": 2.00, "output": 12.00 },
-  { "name": "Gemini 3 Flash", "input": 0.50, "output": 3.00 },
+  { "name": "Gemini 3 Pro", "input": 1.25, "output": 10.00 },
+  { "name": "Gemini 3 Flash", "input": 0.10, "output": 0.40 },
   { "name": "DeepSeek-V3", "input": 0.14, "output": 0.28 },
-  { "name": "Llama 4 Maverick", "input": 0.26, "output": 0.26 },
-  { "name": "Grok 4.1", "input": 3.00, "output": 15.00 }
+  { "name": "Llama 4 Maverick", "input": 0.20, "output": 0.20 },
+  { "name": "Grok 4.0", "input": 3.00, "output": 15.00 }
 ]
