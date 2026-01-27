@@ -3,48 +3,44 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Token Calculator Pro - Master Version</title>
+    <title>Token Calculator Pro - 2026 Strategy Edition</title>
     <style>
         :root {
             --sidebar-w: 220px; --brand: #2563eb; --bg-app: #f8fafc;
             --card-bg: #ffffff; --text-main: #1e293b; --text-muted: #64748b;
-            --border: #e2e8f0; --accent-bg: #f0f7ff; --danger: #ef4444; 
-            --success: #22c55e; --t1: #dbeafe; --t2: #fef3c7; --t3: #dcfce7; --t4: #f3e8ff;
+            --border: #e2e8f0; --accent-bg: #f0f7ff; --success: #22c55e;
+            --t1: #dbeafe; --t2: #fef3c7; --t3: #dcfce7; --t4: #f3e8ff;
         }
         @media (prefers-color-scheme: dark) {
             :root { --bg-app: #0f172a; --card-bg: #1e293b; --text-main: #f1f5f9; --text-muted: #94a3b8; --border: #334155; --accent-bg: #1e293b; }
         }
         
-        /* Responsive Autosize Setup */
         body { margin: 0; font-family: 'Inter', sans-serif; background: var(--bg-app); color: var(--text-main); display: flex; min-height: 100vh; width: 100vw; overflow-x: hidden; }
         aside { width: var(--sidebar-w); min-width: var(--sidebar-w); background: var(--card-bg); border-right: 1px solid var(--border); padding: 16px; display: flex; flex-direction: column; height: 100vh; position: sticky; top: 0; box-sizing: border-box; }
         .main-content { flex: 1; display: flex; flex-direction: column; min-width: 0; width: 100%; }
         header { height: 60px; background: var(--card-bg); border-bottom: 1px solid var(--border); display: flex; align-items: center; padding: 0 20px; justify-content: space-between; box-sizing: border-box; }
-        main { padding: 20px; width: 100%; box-sizing: border-box; max-width: 100%; }
+        main { padding: 20px; width: 100%; box-sizing: border-box; }
 
-        /* Optimization Banner */
         #compare-banner { display: none; background: var(--accent-bg); border: 1px solid var(--brand); border-radius: 8px; padding: 12px; margin-bottom: 15px; position: relative; }
-        .close-banner { position: absolute; top: 10px; right: 10px; cursor: pointer; font-size: 18px; color: var(--text-muted); font-weight: bold; padding: 0 5px; }
+        .close-banner { position: absolute; top: 10px; right: 10px; cursor: pointer; font-size: 18px; color: var(--text-muted); font-weight: bold; }
         .compare-split { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 10px; font-size: 12px; }
         .compare-box { background: var(--card-bg); border: 1px dashed var(--border); padding: 8px; border-radius: 6px; white-space: pre-wrap; max-height: 150px; overflow-y: auto; }
 
-        /* Dashboard UI */
         .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin-bottom: 20px; }
         .glass-card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 10px; padding: 16px; box-sizing: border-box; }
-        textarea { width: 100%; min-height: 200px; padding: 15px; border-radius: 10px; border: 1px solid var(--border); background: var(--bg-app); color: var(--text-main); font-size: 14px; resize: vertical; box-sizing: border-box; margin-bottom: 10px; }
+        textarea { width: 100%; min-height: 180px; padding: 15px; border-radius: 10px; border: 1px solid var(--border); background: var(--bg-app); color: var(--text-main); font-size: 14px; resize: vertical; box-sizing: border-box; margin-bottom: 10px; }
         
-        /* Token Viz with Indexing */
         .token-group { display: inline-flex; flex-direction: column; align-items: center; margin: 2px; }
         .token-idx { font-size: 8px; color: var(--text-muted); font-family: monospace; }
         .token-span { padding: 2px 4px; border-radius: 4px; font-family: monospace; font-size: 11px; white-space: pre; }
         
-        /* Pricing Table */
         .table-wrap { overflow-x: auto; margin-top: 10px; }
-        table { width: 100%; border-collapse: collapse; font-size: 13px; min-width: 600px; }
+        table { width: 100%; border-collapse: collapse; font-size: 13px; min-width: 650px; }
         th, td { text-align: left; padding: 12px; border-bottom: 1px solid var(--border); }
         .num { font-family: monospace; text-align: right; }
-        .btn { padding: 8px 12px; border-radius: 6px; border: 1px solid var(--border); background: var(--card-bg); cursor: pointer; font-size: 13px; font-weight: 500; transition: 0.2s; }
-        .btn:hover { background: var(--accent-bg); }
+        .btn { padding: 8px 12px; border-radius: 6px; border: 1px solid var(--border); background: var(--card-bg); cursor: pointer; font-size: 13px; font-weight: 500; }
+        
+        .why-tag { font-size: 10px; color: var(--brand); background: var(--accent-bg); padding: 4px 8px; border-radius: 4px; display: block; margin-top: 6px; border-left: 3px solid var(--brand); }
     </style>
 </head>
 <body>
@@ -74,7 +70,7 @@
             <span class="close-banner" onclick="hideBanner()">×</span>
             <div style="display:flex; justify-content:space-between; align-items:center; padding-right: 30px;">
                 <span id="compare-text" style="font-weight:700;"></span>
-                <button class="btn" onclick="undoOptimize()">↩ Undo Changes</button>
+                <button class="btn" onclick="undoOptimize()">↩ Undo</button>
             </div>
             <div class="compare-split">
                 <div><small>ORIGINAL</small><div id="old-text-view" class="compare-box"></div></div>
@@ -88,7 +84,7 @@
             <div class="glass-card"><small>PEAK COST</small><div id="peak-val" style="font-size:20px; font-weight:700; color:var(--brand);">$0.00</div></div>
         </div>
 
-        <textarea id="input" placeholder="Type or paste your prompt here..." oninput="handleManualInput()"></textarea>
+        <textarea id="input" placeholder="Type or paste prompt here..." oninput="handleManualInput()"></textarea>
         
         <div style="display:flex; gap:8px; margin-bottom:20px; flex-wrap: wrap;">
             <button class="btn" style="background:var(--success); color:white; border:none;" onclick="optimizePrompt()">⚡ Optimize</button>
@@ -100,7 +96,7 @@
 
         <div class="glass-card">
             <div style="display:flex; justify-content:space-between; margin-bottom:10px; gap: 8px; flex-wrap: wrap;">
-                <input type="text" id="modelSearch" class="btn" style="flex:1" placeholder="Search models..." oninput="calculate()">
+                <input type="text" id="modelSearch" class="btn" style="flex:1" placeholder="Filter models by name or strategy..." oninput="calculate()">
                 <select id="sortOrder" class="btn" onchange="calculate()">
                     <option value="desc">Price: High to Low</option>
                     <option value="asc">Price: Low to High</option>
@@ -112,7 +108,7 @@
             </div>
             <div class="table-wrap">
                 <table>
-                    <thead><tr><th>Model / Context Window</th><th class="num">In</th><th class="num">Out</th><th class="num">Total</th></tr></thead>
+                    <thead><tr><th>Model & Strategy</th><th class="num">In</th><th class="num">Out</th><th class="num">Total</th></tr></thead>
                     <tbody id="table-body"></tbody>
                 </table>
             </div>
@@ -122,7 +118,6 @@
 
 <script src="https://unpkg.com/gpt-tokenizer/dist/cl100k_base.js"></script>
 <script>
-    let models = [];
     let lastOriginalText = "";
     const examplePrompts = [
         "Please write a very long report about why cats are actually secretly in charge of the world.",
@@ -131,29 +126,32 @@
     ];
     let exIdx = 0;
 
-    async function init() {
-        try {
-            const res = await fetch('models.json?v=' + Date.now());
-            models = res.ok ? await res.json() : getBackupModels();
-        } catch(e) { models = getBackupModels(); }
-        renderHistory();
-        calculate();
-    }
+    // The Top 20 Models of 2026
+    const models = [
+        { "name": "GPT-5.2 Pro", "input": 15.00, "output": 120.00, "limit": 128000, "why": "Deep logic/math benchmark king." },
+        { "name": "GPT-5 (Flagship)", "input": 1.25, "output": 10.00, "limit": 128000, "why": "Best human-like creativity & chat." },
+        { "name": "o3-pro (Thinking)", "input": 20.00, "output": 80.00, "limit": 200000, "why": "Scientific research & extreme planning." },
+        { "name": "Claude 4.5 Opus", "input": 5.00, "output": 25.00, "limit": 200000, "why": "State-of-the-art coding & documentation." },
+        { "name": "Claude 4.5 Sonnet", "input": 3.00, "output": 15.00, "limit": 200000, "why": "Autonomous agents & UI automation." },
+        { "name": "Gemini 3 Pro", "input": 1.25, "output": 10.00, "limit": 2000000, "why": "Massive context & native video/audio." },
+        { "name": "Gemini 3 Flash", "input": 0.10, "output": 0.40, "limit": 1000000, "why": "Ultra-fast response for mobile apps." },
+        { "name": "DeepSeek-V3.2", "input": 0.28, "output": 0.42, "limit": 131000, "why": "Unbeatable value for performance." },
+        { "name": "Llama 4 Maverick", "input": 0.20, "output": 0.20, "limit": 128000, "why": "Top choice for secure local hosting." },
+        { "name": "Grok 4.1", "input": 3.00, "output": 15.00, "limit": 128000, "why": "Real-time X.com data & social trends." },
+        { "name": "Mistral Large 3", "input": 2.00, "output": 6.00, "limit": 128000, "why": "Multilingual mastery (European focus)." },
+        { "name": "Perplexity Sonar Pro", "input": 1.00, "output": 1.00, "limit": 32000, "why": "Best for web-grounded research." },
+        { "name": "GPT-4o mini", "input": 0.15, "output": 0.60, "limit": 128000, "why": "Efficient for small repetitive tasks." },
+        { "name": "Claude 3.5 Haiku", "input": 0.25, "output": 1.25, "limit": 200000, "why": "Fastest coding refactors." },
+        { "name": "Cohere Command R+", "input": 3.00, "output": 15.00, "limit": 128000, "why": "Optimized for Enterprise RAG/search." },
+        { "name": "Qwen 3 Coder", "input": 0.30, "output": 0.60, "limit": 32000, "why": "Specialized for Python/C++ automation." },
+        { "name": "o1-mini", "input": 3.00, "output": 12.00, "limit": 128000, "why": "Legacy reasoning for coders." },
+        { "name": "Mistral Small 2", "input": 0.20, "output": 0.60, "limit": 32000, "why": "Mathematical reasoning on a budget." },
+        { "name": "DeepSeek Coder V2", "input": 0.14, "output": 0.28, "limit": 128000, "why": "Cheapest coding assistant available." },
+        { "name": "Gemini 2.5 Flash-Lite", "input": 0.05, "output": 0.10, "limit": 1000000, "why": "Bare-minimum cost for huge context." }
+    ];
 
-    function getBackupModels() {
-        return [
-            {name:"GPT-4o (Standard)", input:5, output:15, limit:128000},
-            {name:"Claude 3.5 Sonnet", input:3, output:15, limit:200000},
-            {name:"GPT-4o mini", input:0.15, output:0.6, limit:128000}
-        ];
-    }
-
-    // Banner Reset Logic
     function handleManualInput() { hideBanner(); calculate(); }
-    function hideBanner() {
-        document.getElementById('compare-banner').style.display = 'none';
-        lastOriginalText = "";
-    }
+    function hideBanner() { document.getElementById('compare-banner').style.display = 'none'; lastOriginalText = ""; }
 
     function calculate() {
         const text = document.getElementById('input').value;
@@ -161,8 +159,8 @@
         const ratio = parseFloat(document.getElementById('ratio').value);
         const search = document.getElementById('modelSearch').value.toLowerCase();
         const sortOrder = document.getElementById('sortOrder').value;
-        const sym = curr === 'INR' ? '₹' : '$';
         const rate = curr === 'INR' ? 83.5 : 1;
+        const sym = curr === 'INR' ? '₹' : '$';
 
         const tokens = text ? GPTTokenizer_cl100k_base.encode(text) : [];
         const inC = tokens.length;
@@ -171,22 +169,27 @@
         document.getElementById('in-count').innerText = inC.toLocaleString();
         document.getElementById('out-count').innerText = outC.toLocaleString();
 
-        let data = models.filter(m => m.name.toLowerCase().includes(search)).map(m => {
-            const cIn = (inC / 1000000) * m.input;
-            const cOut = (outC / 1000000) * m.output;
-            const total = (cIn + cOut) * rate;
-            return { ...m, cIn, cOut, total };
+        let filtered = models.filter(m => 
+            m.name.toLowerCase().includes(search) || m.why.toLowerCase().includes(search)
+        ).map(m => {
+            const costIn = (inC / 1000000) * m.input;
+            const costOut = (outC / 1000000) * m.output;
+            const total = (costIn + costOut) * rate;
+            return { ...m, costIn, costOut, total };
         });
 
-        if(sortOrder === 'desc') data.sort((a,b) => b.total - a.total);
-        else data.sort((a,b) => a.total - b.total);
+        if(sortOrder === 'desc') filtered.sort((a,b) => b.total - a.total);
+        else filtered.sort((a,b) => a.total - b.total);
 
         let html = ''; let peak = 0;
-        data.forEach(m => {
+        filtered.forEach(m => {
             if (m.total > peak) peak = m.total;
-            html += `<tr><td><b>${m.name}</b><br><small>Limit: ${m.limit/1000}K</small></td>
-                <td class="num">${sym}${m.cIn.toFixed(4)}</td><td class="num">${sym}${m.cOut.toFixed(4)}</td>
-                <td class="num" style="color:var(--brand); font-weight:700;">${sym}${m.total.toFixed(2)}</td></tr>`;
+            html += `<tr>
+                <td><b>${m.name}</b><br><small>Limit: ${m.limit/1000}K</small><span class="why-tag">💡 ${m.why}</span></td>
+                <td class="num">${sym}${m.costIn.toFixed(4)}</td>
+                <td class="num">${sym}${m.costOut.toFixed(4)}</td>
+                <td class="num" style="color:var(--brand); font-weight:700;">${sym}${m.total.toFixed(2)}</td>
+            </tr>`;
         });
 
         document.getElementById('table-body').innerHTML = html;
@@ -197,7 +200,7 @@
 
     function renderViz(tokens) {
         const viz = document.getElementById('viz');
-        viz.innerHTML = tokens.length ? '' : '<small style="color:var(--text-muted)">Token visualization (with Indexing) will appear here...</small>';
+        viz.innerHTML = tokens.length ? '' : '<small style="color:var(--text-muted)">Token visualization...</small>';
         tokens.slice(0, 50).forEach((t, i) => {
             const g = document.createElement('div'); g.className = 'token-group';
             g.innerHTML = `<span class="token-idx">${i+1}</span><span class="token-span" style="background:var(--t${(i%4)+1})">${GPTTokenizer_cl100k_base.decode([t])}</span>`;
@@ -210,13 +213,10 @@
         if(!input.value) return;
         const currentText = input.value;
         const optimized = currentText.replace(/\b(Please|Actually|Very|I would like you to|Can you|I want you to|In order to)\b/gi, '').replace(/\s+/g, ' ').trim();
-        
         if (optimized === currentText) return;
-
         lastOriginalText = currentText;
         input.value = optimized;
         const saved = GPTTokenizer_cl100k_base.encode(lastOriginalText).length - GPTTokenizer_cl100k_base.encode(optimized).length;
-        
         document.getElementById('compare-banner').style.display = 'block';
         document.getElementById('compare-text').innerText = `✨ Saved ${saved} Tokens!`;
         document.getElementById('old-text-view').innerText = lastOriginalText;
@@ -224,23 +224,10 @@
         calculate();
     }
 
-    function jokeExample() {
-        hideBanner(); // Ensures old optimized text views clear on new example
-        document.getElementById('input').value = examplePrompts[exIdx];
-        exIdx = (exIdx + 1) % examplePrompts.length;
-        calculate();
-    }
-
+    function jokeExample() { hideBanner(); document.getElementById('input').value = examplePrompts[exIdx]; exIdx = (exIdx + 1) % examplePrompts.length; calculate(); }
     function clearEditor() { document.getElementById('input').value = ''; hideBanner(); calculate(); }
+    function undoOptimize() { if(lastOriginalText) { document.getElementById('input').value = lastOriginalText; hideBanner(); calculate(); } }
     
-    function undoOptimize() {
-        if(lastOriginalText) {
-            document.getElementById('input').value = lastOriginalText;
-            hideBanner();
-            calculate();
-        }
-    }
-
     function saveToHistory() {
         const txt = document.getElementById('input').value; if(!txt) return;
         const h = JSON.parse(localStorage.getItem('h') || '[]');
@@ -248,14 +235,15 @@
         localStorage.setItem('h', JSON.stringify(h.slice(0,10)));
         renderHistory();
     }
-    
     function renderHistory() {
         const h = JSON.parse(localStorage.getItem('h') || '[]');
         document.getElementById('history-list').innerHTML = h.map(i => `<div style="padding:8px; border-bottom:1px solid var(--border); cursor:pointer;" onclick="document.getElementById('input').value='${i.t.replace(/'/g, "\\'")}';calculate();"><b>${i.d}</b>: ${i.t.substring(0,20)}...</div>`).join('') || 'No history';
     }
-    
     function clearHistory() { localStorage.removeItem('h'); renderHistory(); }
-    init();
+    
+    // Auto-calculate on load
+    calculate();
+    renderHistory();
 </script>
 </body>
 </html>
