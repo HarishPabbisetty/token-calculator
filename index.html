@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Token Calculator Pro - 2026 Strategy Edition</title>
+    <title>Token Calculator</title>
     <style>
         :root {
             --sidebar-w: 240px; --brand: #2563eb; --bg-app: #f8fafc;
@@ -18,7 +18,6 @@
         
         body { margin: 0; font-family: 'Inter', sans-serif; background: var(--bg-app); color: var(--text-main); display: flex; min-height: 100vh; overflow-x: hidden; }
         
-        /* Sidebar */
         aside { 
             width: var(--sidebar-w); min-width: var(--sidebar-w); background: var(--card-bg); border-right: 1px solid var(--border); 
             padding: 16px; display: flex; flex-direction: column; height: 100vh; 
@@ -30,31 +29,23 @@
         #overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 1500; backdrop-filter: blur(2px); }
 
         .main-content { flex: 1; display: flex; flex-direction: column; width: 100%; margin-left: 0; transition: margin 0.3s; }
-        
         header { height: 60px; background: var(--card-bg); border-bottom: 1px solid var(--border); display: flex; align-items: center; padding: 0 20px; position: sticky; top: 0; z-index: 100; }
         .menu-btn { background: none; border: none; font-size: 24px; cursor: pointer; color: var(--text-main); margin-right: 15px; }
 
-        /* Two-Column Grid */
         .split-container { 
             display: grid; 
             grid-template-columns: 1.2fr 1fr; 
             gap: 20px; 
             padding: 20px; 
             height: calc(100vh - 100px);
-            max-width: 1600px;
-            margin: 0 auto;
-            width: 100%;
-            box-sizing: border-box;
+            max-width: 1600px; margin: 0 auto; width: 100%; box-sizing: border-box;
         }
 
-        .left-panel, .right-panel { display: flex; flex-direction: column; gap: 15px; overflow-y: auto; padding-right: 5px; }
-
-        /* UI Components */
+        .left-panel, .right-panel { display: flex; flex-direction: column; gap: 15px; overflow-y: auto; }
         .glass-card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 10px; padding: 16px; box-sizing: border-box; }
-        textarea { width: 100%; min-height: 250px; padding: 15px; border-radius: 10px; border: 1px solid var(--border); background: var(--bg-app); color: var(--text-main); font-size: 14px; resize: none; outline: none; }
+        textarea { width: 100%; min-height: 200px; padding: 15px; border-radius: 10px; border: 1px solid var(--border); background: var(--bg-app); color: var(--text-main); font-size: 14px; resize: vertical; outline: none; }
         
         .stats-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-        
         .token-group { display: inline-flex; flex-direction: column; align-items: center; margin: 2px; }
         .token-idx { font-size: 8px; color: var(--text-muted); font-family: monospace; }
         .token-span { padding: 2px 4px; border-radius: 4px; font-family: monospace; font-size: 11px; white-space: pre; }
@@ -62,21 +53,15 @@
         table { width: 100%; border-collapse: collapse; font-size: 13px; }
         th, td { text-align: left; padding: 12px; border-bottom: 1px solid var(--border); }
         .num { font-family: monospace; text-align: right; font-weight: 700; }
-        
         .over-budget { background-color: #fff1f2 !important; color: var(--danger) !important; }
         .why-tag { font-size: 10px; color: var(--brand); background: var(--accent-bg); padding: 4px 8px; border-radius: 4px; display: block; margin-top: 4px; font-weight: bold; border-left: 3px solid var(--brand); }
 
         .btn { padding: 8px 12px; border-radius: 6px; border: 1px solid var(--border); background: var(--card-bg); cursor: pointer; font-size: 13px; font-weight: 500; display: inline-flex; align-items: center; gap: 6px; color: var(--text-main); }
         .btn-success { background: var(--success); color: white; border: none; }
+        .btn-primary { background: var(--brand); color: white; border: none; }
 
-        @media (max-width: 1024px) {
-            .split-container { grid-template-columns: 1fr; height: auto; }
-        }
-        @media (min-width: 1025px) {
-            aside { transform: translateX(0); }
-            .main-content { margin-left: var(--sidebar-w); }
-            .menu-btn { display: none; }
-        }
+        @media (max-width: 1024px) { .split-container { grid-template-columns: 1fr; height: auto; } }
+        @media (min-width: 1025px) { aside { transform: translateX(0); } .main-content { margin-left: var(--sidebar-w); } .menu-btn { display: none; } }
     </style>
 </head>
 <body>
@@ -87,6 +72,7 @@
     <h3 style="color:var(--brand); margin-top:0;">Token Calc</h3>
     <div id="history-list" style="flex:1; overflow-y:auto; font-size:11px; margin-bottom: 15px;"></div>
     <div style="display:flex; flex-direction:column; gap:8px;">
+        <button class="btn btn-primary" onclick="downloadData()">📥 Download JSON</button>
         <button class="btn btn-success" onclick="saveToHistory()">💾 Save Text</button>
         <button class="btn" onclick="clearHistory()" style="color:var(--danger)">🗑 Clear History</button>
     </div>
@@ -95,7 +81,7 @@
 <div class="main-content">
     <header>
         <button class="menu-btn" onclick="toggleMenu()">☰</button>
-        <h2 style="font-size: 18px; margin: 0;">2026 Strategy Calculator</h2>
+        <h2 style="font-size: 18px; margin: 0;">Token Calculator</h2>
     </header>
 
     <div class="split-container">
@@ -105,10 +91,11 @@
                 <div class="glass-card"><small>PEAK COST (IN)</small><div id="peak-val" style="font-size:20px; font-weight:700; color:var(--brand);">$0.0000</div></div>
             </div>
 
-            <textarea id="input" placeholder="Enter your prompt here..." oninput="calculate()"></textarea>
+            <textarea id="input" placeholder="Type or paste prompt here..." oninput="calculate()"></textarea>
             
-            <div style="display:flex; gap:8px; align-items:center;">
+            <div style="display:flex; gap:8px; flex-wrap: wrap;">
                 <button class="btn btn-success" onclick="optimizePrompt()">⚡ Optimize</button>
+                <button class="btn" onclick="jokeExample()">🎭 Example</button>
                 <button class="btn" onclick="clearEditor()">Clear</button>
                 <div style="margin-left:auto; display:flex; align-items:center; gap:8px;">
                     <small>Budget:</small>
@@ -123,8 +110,12 @@
 
         <div class="right-panel">
             <div class="glass-card" style="flex:1; display:flex; flex-direction:column;">
-                <div style="display:flex; gap:10px; margin-bottom:15px;">
-                    <input type="text" id="modelSearch" class="btn" style="flex:1;" placeholder="🔍 Search models..." oninput="calculate()">
+                <div style="display:flex; gap:10px; margin-bottom:15px; flex-wrap: wrap;">
+                    <input type="text" id="modelSearch" class="btn" style="flex:1; min-width:120px;" placeholder="🔍 Filter..." oninput="calculate()">
+                    <select id="sortOrder" class="btn" onchange="calculate()">
+                        <option value="asc">Price: Low to High</option>
+                        <option value="desc">Price: High to Low</option>
+                    </select>
                     <select id="curr" class="btn" onchange="calculate()">
                         <option value="USD" selected>$ USD</option>
                         <option value="INR">₹ INR</option>
@@ -150,6 +141,13 @@
 <script src="https://unpkg.com/gpt-tokenizer/dist/cl100k_base.js"></script>
 <script>
     let models = []; 
+    const examples = [
+        "Write a roast about why computers are better than humans.",
+        "Tell a joke about a developer who refuses to comment their code.",
+        "Explain why the moon is actually a giant block of cheese."
+    ];
+    let exIdx = 0;
+
     function toggleMenu() { document.getElementById('sidebar').classList.toggle('open'); }
 
     fetch('models.json')
@@ -159,26 +157,32 @@
 
     function calculate() {
         const text = document.getElementById('input').value;
-        const curr = document.getElementById('curr').value;
         const search = document.getElementById('modelSearch').value.toLowerCase();
+        const sort = document.getElementById('sortOrder').value;
         const budget = parseFloat(document.getElementById('budgetLimit').value) || 0;
-        const rate = curr === 'INR' ? 83.5 : 1;
-        const sym = curr === 'INR' ? '₹' : '$';
+        const rate = document.getElementById('curr').value === 'INR' ? 83.5 : 1;
+        const sym = document.getElementById('curr').value === 'INR' ? '₹' : '$';
 
         const tokens = text ? GPTTokenizer_cl100k_base.encode(text) : [];
         document.getElementById('in-count').innerText = tokens.length.toLocaleString();
 
-        let peak = 0;
-        let html = models.filter(m => m.name.toLowerCase().includes(search))
+        let filtered = models.filter(m => m.name.toLowerCase().includes(search))
             .map(m => {
                 const cost = (tokens.length / 1000000) * m.input * rate;
-                if (cost > peak) peak = cost;
-                const isOver = cost > (budget * rate);
-                return `<tr class="${isOver ? 'over-budget' : ''}">
-                    <td><b>${m.name}</b><span class="why-tag">💡 ${m.why}</span></td>
-                    <td class="num" style="color:${isOver ? 'var(--danger)' : 'var(--brand)'}">${sym}${cost.toFixed(6)}</td>
-                </tr>`;
-            }).join('');
+                return { ...m, cost };
+            });
+
+        filtered.sort((a,b) => sort === 'desc' ? b.cost - a.cost : a.cost - b.cost);
+
+        let peak = 0;
+        let html = filtered.map(m => {
+            if (m.cost > peak) peak = m.cost;
+            const isOver = m.cost > (budget * (document.getElementById('curr').value === 'INR' ? 83.5 : 1));
+            return `<tr class="${isOver ? 'over-budget' : ''}">
+                <td><b>${m.name}</b><span class="why-tag">💡 ${m.why}</span></td>
+                <td class="num" style="color:${isOver ? 'var(--danger)' : 'var(--brand)'}">${sym}${m.cost.toFixed(6)}</td>
+            </tr>`;
+        }).join('');
 
         document.getElementById('table-body').innerHTML = html;
         document.getElementById('peak-val').innerText = sym + peak.toFixed(4);
@@ -188,14 +192,27 @@
     function renderViz(tokens) {
         const viz = document.getElementById('viz');
         viz.innerHTML = tokens.length ? '' : '<small style="color:var(--text-muted)">Tokenization preview...</small>';
-        tokens.slice(0, 100).forEach((t, i) => {
+        tokens.slice(0, 50).forEach((t, i) => {
             const g = document.createElement('div'); g.className = 'token-group';
             g.innerHTML = `<span class="token-idx">${i+1}</span><span class="token-span" style="background:var(--t${(i%4)+1})">${GPTTokenizer_cl100k_base.decode([t])}</span>`;
             viz.appendChild(g);
         });
     }
 
+    function optimizePrompt() {
+        const input = document.getElementById('input');
+        input.value = input.value.replace(/\b(Please|Actually|Very|Can you)\b/gi, '').replace(/\s+/g, ' ').trim();
+        calculate();
+    }
+
+    function jokeExample() { document.getElementById('input').value = examples[exIdx]; exIdx = (exIdx + 1) % examples.length; calculate(); }
     function clearEditor() { document.getElementById('input').value = ''; calculate(); }
+    function downloadData() {
+        const text = document.getElementById('input').value; if(!text) return;
+        const blob = new Blob([JSON.stringify({text, tokens: document.getElementById('in-count').innerText}, null, 2)], {type: 'application/json'});
+        const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `calc-export.json`; a.click();
+    }
+
     function saveToHistory() {
         const txt = document.getElementById('input').value; if(!txt) return;
         const h = JSON.parse(localStorage.getItem('h') || '[]');
@@ -207,6 +224,7 @@
         const h = JSON.parse(localStorage.getItem('h') || '[]');
         document.getElementById('history-list').innerHTML = h.map(i => `<div style="padding:10px; border-bottom:1px solid var(--border); cursor:pointer;" onclick="document.getElementById('input').value=\`${i.t}\`;calculate()">${i.d}: ${i.t.substring(0,20)}...</div>`).join('') || 'No history';
     }
+    function clearHistory() { localStorage.removeItem('h'); renderHistory(); }
     renderHistory();
 </script>
 </body>
