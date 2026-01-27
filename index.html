@@ -1,76 +1,97 @@
 ---
 layout: default
-title: AI Token Counter
+title: AI Token Counter & Cost Estimator
 ---
 
 <style>
-  /* 1. Expand Width & Fix Theme Clashes */
-  section { width: 100% !important; max-width: 850px !important; }
-  
-  /* 2. Stats Grid */
-  .stats-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px; margin-bottom: 25px; }
-  .stat-card { padding: 15px; border-radius: 12px; text-align: center; border: 1px solid #e1e4e8; }
-  .tokens-bg { background-color: #f0f7ff; border-color: #dbeafe; }
-  .chars-bg { background-color: #f9fafb; }
-  .words-bg { background-color: #fffaf0; border-color: #fee2b3; }
-  .stat-label { color: #586069; font-size: 11px; font-weight: bold; text-transform: uppercase; margin-bottom: 5px; }
-  .stat-val { font-size: 32px; font-weight: 900; color: #24292e; }
-
-  /* 3. Input & Buttons */
-  .control-bar { display: flex; gap: 10px; margin-bottom: 10px; justify-content: flex-end; }
-  .action-btn { background: white; border: 1px solid #d1d5da; padding: 6px 12px; border-radius: 6px; font-size: 13px; cursor: pointer; }
-  textarea#token-input {
-    width: 100%; padding: 15px; border: 1px solid #d1d5da; border-radius: 8px;
-    font-size: 16px; line-height: 1.5; background-color: #fafbfc; min-height: 180px; box-sizing: border-box;
+  /* 1. Universal Layout Fixes */
+  #main_content, section { 
+    max-width: 900px !important; 
+    margin: 0 auto !important; 
+    padding: 20px !important; 
   }
 
-  /* 4. Pricing Table */
-  .price-header { display: flex; justify-content: space-between; align-items: center; margin-top: 30px; margin-bottom: 10px; }
+  /* 2. Stats Grid - 3 Columns */
+  .stats-grid { 
+    display: grid; 
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); 
+    gap: 15px; 
+    margin-bottom: 25px; 
+  }
+  .stat-card { 
+    padding: 20px; 
+    border-radius: 12px; 
+    text-align: center; 
+    border: 1px solid #e1e4e8; 
+    box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+  }
+  .tokens-bg { background-color: #f0f7ff; border-color: #dbeafe; }
+  .words-bg { background-color: #fffaf0; border-color: #fee2b3; }
+  .chars-bg { background-color: #f9fafb; }
+  
+  .stat-label { color: #586069; font-size: 12px; font-weight: bold; text-transform: uppercase; margin-bottom: 8px; }
+  .stat-val { font-size: 36px; font-weight: 900; color: #24292e; line-height: 1; }
+
+  /* 3. Controls & Textarea */
+  .control-bar { display: flex; gap: 10px; margin-bottom: 12px; justify-content: flex-end; }
+  .action-btn { 
+    background: white; border: 1px solid #d1d5da; padding: 8px 16px; 
+    border-radius: 6px; font-size: 13px; cursor: pointer; font-weight: 600;
+  }
+  .action-btn:hover { background: #f6f8fa; }
+  .btn-clear { color: #d73a49; border-color: #f5b0b0; }
+  
+  textarea#token-input {
+    width: 100%; padding: 18px; border: 1px solid #d1d5da; border-radius: 10px;
+    font-size: 16px; line-height: 1.6; background-color: #fff; min-height: 220px;
+    box-sizing: border-box; box-shadow: inset 0 1px 2px rgba(0,0,0,0.05);
+  }
+
+  /* 4. Pricing Table & Toggle */
+  .price-header { display: flex; justify-content: space-between; align-items: center; margin-top: 40px; margin-bottom: 15px; }
   .toggle-container { background: #f1f8ff; padding: 4px; border-radius: 20px; border: 1px solid #c8e1ff; display: flex; }
-  .toggle-btn { border: none; padding: 5px 15px; border-radius: 16px; cursor: pointer; font-size: 12px; font-weight: bold; background: transparent; }
+  .toggle-btn { border: none; padding: 6px 18px; border-radius: 16px; cursor: pointer; font-size: 12px; font-weight: bold; background: transparent; transition: 0.3s; }
   .toggle-btn.active { background: #0366d6; color: white; }
-  .price-container { border: 1px solid #e1e4e8; border-radius: 8px; overflow: hidden; background: white; }
-  table { width: 100%; border-collapse: collapse; margin: 0; font-size: 14px; }
-  th { background: #f6f8fa; text-align: left; padding: 10px 15px; border-bottom: 1px solid #e1e4e8; }
-  td { padding: 10px 15px; border-bottom: 1px solid #f1f1f1; }
+
+  .price-container { border: 1px solid #e1e4e8; border-radius: 10px; overflow: hidden; background: white; }
+  table { width: 100%; border-collapse: collapse; margin: 0; }
+  th { background: #f6f8fa; text-align: left; padding: 12px 20px; font-size: 13px; color: #586069; border-bottom: 1px solid #e1e4e8; }
+  td { padding: 12px 20px; border-bottom: 1px solid #f1f1f1; font-size: 15px; }
+  .cost-val { font-family: "SFMono-Regular", Consolas, monospace; font-weight: bold; color: #28a745; text-align: right; }
 
   /* 5. THE ULTIMATE OVERLAP FIX */
   #visualizer {
-    background: #1e1e1e;
-    padding: 25px;
-    border-radius: 10px;
+    background: #1e1e1e; 
+    padding: 30px; 
+    border-radius: 12px; 
     margin-top: 15px;
-    /* FLEXBOX prevents overlap by treating tokens as actual bricks */
-    display: flex;
-    flex-wrap: wrap;
+    display: flex; 
+    flex-wrap: wrap; 
     align-content: flex-start;
-    /* This gap ensures 8px vertical space and 4px horizontal space */
-    gap: 8px 4px; 
-    min-height: 100px;
+    gap: 10px 6px; /* High vertical gap ensures no overlap */
+    min-height: 120px;
   }
-
   .token-box {
-    color: #1a1a1a;
-    padding: 2px 6px;
-    border-radius: 4px;
-    font-family: "SFMono-Regular", Consolas, monospace;
-    font-size: 13px;
+    color: #1a1a1a; 
+    padding: 3px 8px; 
+    border-radius: 5px; 
+    font-family: "SFMono-Regular", Consolas, monospace; 
+    font-size: 13px; 
     font-weight: 700;
-    white-space: pre-wrap; /* Preserves spaces AND allows wrapping */
-    display: inline-block;
-    /* Force line-height for the token itself so it doesn't get crushed */
-    line-height: 1.4 !important;
+    white-space: pre-wrap; 
+    display: inline-block; 
+    line-height: 1.5 !important; /* Fixed line height for the box itself */
   }
 </style>
 
 <div class="stats-grid">
   <div class="stat-card tokens-bg">
-    <div class="stat-label">Tokens</div>
-    <div id="t-count" class="stat-val">0</div>
+    <div class="stat-label" style="color: #0366d6;">Tokens</div>
+    <div id="t-count" class="stat-val" style="color: #05264c;">0</div>
   </div>
   <div class="stat-card words-bg">
-    <div class="stat-label">Words</div>
-    <div id="w-count" class="stat-val">0</div>
+    <div class="stat-label" style="color: #9a6700;">Words</div>
+    <div id="w-count" class="stat-val" style="color: #735c0f;">0</div>
   </div>
   <div class="stat-card chars-bg">
     <div class="stat-label">Characters</div>
@@ -80,27 +101,32 @@ title: AI Token Counter
 
 <div class="control-bar">
   <button class="action-btn" onclick="showExample()">Example</button>
-  <button class="action-btn" style="color:red; border-color:#ffcccc" onclick="clearAll()">Clear</button>
+  <button class="action-btn btn-clear" onclick="clearAll()">Clear All</button>
 </div>
 
-<textarea id="token-input" placeholder="Paste text here..."></textarea>
+<textarea id="token-input" placeholder="Paste your text here..."></textarea>
 
 <div class="price-header">
-  <h3 style="font-size: 14px; color: #586069; text-transform: uppercase;">Estimated Costs</h3>
+  <h3 style="font-size: 16px; margin: 0; color: #24292e;">Estimated Real-World Costs</h3>
   <div class="toggle-container">
-    <button id="btn-input" class="toggle-btn active" onclick="setPricingType('input')">Input</button>
-    <button id="btn-output" class="toggle-btn" onclick="setPricingType('output')">Output</button>
+    <button id="btn-input" class="toggle-btn active" onclick="setPricingType('input')">Input Tokens</button>
+    <button id="btn-output" class="toggle-btn" onclick="setPricingType('output')">Output Tokens</button>
   </div>
 </div>
 
 <div class="price-container">
   <table>
-    <thead><tr><th>Model</th><th style="text-align: right;">Cost</th></tr></thead>
+    <thead>
+      <tr>
+        <th>AI Model</th>
+        <th style="text-align: right;">Cost (USD)</th>
+      </tr>
+    </thead>
     <tbody id="price-table-body"></tbody>
   </table>
 </div>
 
-<h3 style="font-size: 14px; color: #586069; text-transform: uppercase; margin-top: 30px;">Visual Breakdown</h3>
+<h3 style="font-size: 16px; margin-top: 40px; margin-bottom: 10px; color: #24292e;">Visual Token Breakdown</h3>
 <div id="visualizer"></div>
 
 <script src="https://unpkg.com/gpt-tokenizer/dist/cl100k_base.js"></script>
@@ -108,21 +134,25 @@ title: AI Token Counter
 <script>
   let currentType = 'input';
   let currentTokenCount = 0;
-  
-  // Prices per 1 Million Tokens (Updated Jan 2026)
+
   const models = [
     { name: "GPT-4o", input: 2.50, output: 10.00 },
     { name: "GPT-4o mini", input: 0.15, output: 0.60 },
     { name: "Claude 3.5 Sonnet", input: 3.00, output: 15.00 },
+    { name: "Claude 3.5 Haiku", input: 0.25, output: 1.25 },
+    { name: "Gemini 1.5 Pro", input: 1.25, output: 5.00 },
     { name: "Gemini 1.5 Flash", input: 0.075, output: 0.30 }
   ];
 
-  function clearAll() { document.getElementById('token-input').value = ''; updateUI(''); }
-  
-  function showExample() { 
-    const ex = "This tool is totally private. Your text never leaves your browser because the tokenization happens locally using JavaScript. Try pasting a long document!"; 
-    document.getElementById('token-input').value = ex; 
-    updateUI(ex); 
+  function clearAll() {
+    document.getElementById('token-input').value = '';
+    updateUI('');
+  }
+
+  function showExample() {
+    const ex = "Did you know? GPT models don't read words. They read 'tokens'. On average, 1,000 tokens is about 750 words. This tool helps you visualize exactly how your text is sliced!";
+    document.getElementById('token-input').value = ex;
+    updateUI(ex);
   }
 
   function setPricingType(type) {
@@ -136,52 +166,52 @@ title: AI Token Counter
     const tableBody = document.getElementById('price-table-body');
     tableBody.innerHTML = '';
     models.forEach(m => {
-      const pricePerMillion = m[currentType];
-      const totalCost = (currentTokenCount / 1000000) * pricePerMillion;
+      const ratePerMillion = m[currentType];
+      const totalCost = (currentTokenCount / 1000000) * ratePerMillion;
       
-      // FIX: Increase precision to 6 decimal places so cheap models don't show $0
       let displayCost;
       if (totalCost === 0) {
         displayCost = "$0.00";
-      } else if (totalCost < 0.00001) {
-        displayCost = "$" + totalCost.toFixed(7); // Extra precision for mini models
+      } else if (totalCost < 0.001) {
+        displayCost = "$" + totalCost.toFixed(6); // Higher precision for cheap models
       } else {
-        displayCost = "$" + totalCost.toFixed(5);
+        displayCost = "$" + totalCost.toFixed(4);
       }
       
-      tableBody.innerHTML += `<tr><td><strong>${m.name}</strong></td><td style="text-align:right; font-family:monospace; color:#28a745; font-weight:bold;">${displayCost}</td></tr>`;
+      tableBody.innerHTML += `<tr>
+        <td><strong>${m.name}</strong></td>
+        <td class="cost-val">${displayCost}</td>
+      </tr>`;
     });
   }
 
   function updateUI(text) {
     const tokens = text ? GPTTokenizer_cl100k_base.encode(text) : [];
     currentTokenCount = tokens.length;
+    const words = text.trim() ? text.trim().split(/\s+/).length : 0;
     
     document.getElementById('t-count').innerText = currentTokenCount.toLocaleString();
-    document.getElementById('w-count').innerText = (text.trim() ? text.trim().split(/\s+/).length : 0).toLocaleString();
+    document.getElementById('w-count').innerText = words.toLocaleString();
     document.getElementById('c-count').innerText = text.length.toLocaleString();
     
     renderPricing();
 
     const visualizer = document.getElementById('visualizer');
     visualizer.innerHTML = '';
-    const colors = ['#818cf8', '#fbbf24', '#34d399', '#f87171', '#a78bfa', '#22d3ee'];
+    if (tokens.length === 0) return;
 
+    const colors = ['#818cf8', '#fbbf24', '#34d399', '#f87171', '#a78bfa', '#22d3ee'];
     tokens.forEach((id, i) => {
       const div = document.createElement('div');
       div.className = 'token-box';
       div.style.backgroundColor = colors[i % colors.length];
-      
-      // Fix for space display
-      let chunk = GPTTokenizer_cl100k_base.decode([id]);
-      div.textContent = chunk;
-      
+      div.textContent = GPTTokenizer_cl100k_base.decode([id]);
       visualizer.appendChild(div);
     });
   }
 
   document.getElementById('token-input').addEventListener('input', (e) => updateUI(e.target.value));
   
-  // Initialize
+  // Initial pricing load
   renderPricing();
 </script>
