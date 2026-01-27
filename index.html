@@ -38,24 +38,28 @@
         header { height: 60px; background: var(--card-bg); border-bottom: 1px solid var(--border); display: flex; align-items: center; padding: 0 20px; justify-content: space-between; }
         main { padding: 20px; box-sizing: border-box; width: 100%; }
         
-        /* Layout & Cards */
         .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin-bottom: 20px; }
         .glass-card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 10px; padding: 16px; }
 
-        /* Table priority layout: Input 40% | Table 60% */
         .workspace-layout { display: grid; grid-template-columns: 1fr; gap: 20px; }
         @media (min-width: 1200px) { .workspace-layout { grid-template-columns: 4fr 6fr; } }
 
         textarea { width: 100%; min-height: 200px; padding: 15px; border-radius: 10px; border: 1px solid var(--border); background: var(--bg-app); color: var(--text-main); font-size: 15px; resize: vertical; box-sizing: border-box; }
 
-        /* Table Styling */
+        /* NEW: Search Bar Styling */
+        .search-container { margin-bottom: 12px; }
+        .search-input { 
+            width: 100%; padding: 10px 14px; border-radius: 8px; border: 1px solid var(--border); 
+            background: var(--bg-app); color: var(--text-main); outline: none; font-size: 14px;
+        }
+        .search-input:focus { border-color: var(--brand); box-shadow: 0 0 0 2px var(--accent-bg); }
+
         table { width: 100%; border-collapse: collapse; font-size: 14px; }
         th { text-align: left; padding: 15px; color: var(--text-muted); border-bottom: 2px solid var(--border); }
         td { padding: 15px; border-bottom: 1px solid var(--border); }
         .num { font-family: monospace; text-align: right; font-weight: 500; }
         .model-name { color: var(--brand); cursor: pointer; font-weight: 600; text-decoration: underline; }
 
-        /* Modal */
         .modal-bg { position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: none; align-items: center; justify-content: center; z-index: 3000; }
         .modal-bg.active { display: flex; }
         .modal { background: var(--card-bg); padding: 24px; border-radius: 12px; width: 350px; border: 1px solid var(--border); }
@@ -112,7 +116,11 @@
                     <textarea id="input" placeholder="Paste text here..." oninput="calculate()"></textarea>
                     <div id="viz" class="glass-card" style="margin-top:15px; min-height:80px;"></div>
                 </div>
-                <div class="glass-card" style="padding:0; overflow-x:auto;">
+                <div class="glass-card" style="padding:15px; overflow-x:auto;">
+                    <div class="search-container">
+                        <input type="text" id="modelSearch" class="search-input" placeholder="🔍 Search models (e.g. GPT, Gemini)..." oninput="calculate()">
+                    </div>
+                    
                     <table>
                         <thead style="background:var(--bg-app)">
                             <tr><th>Model</th><th class="num">In</th><th class="num">Out</th><th class="num">Total</th></tr>
@@ -160,30 +168,39 @@
 
     function calculate() {
         const text = document.getElementById('input').value;
+        const searchTerm = document.getElementById('modelSearch').value.toLowerCase();
         const tokens = text ? GPTTokenizer_cl100k_base.encode(text) : [];
         const count = tokens.length;
         const ratio = parseFloat(document.getElementById('ratio').value);
         
         document.getElementById('in-count').innerText = count.toLocaleString();
         
-        let html = ''; let totalSum = 0;
+        let html = ''; let totalSum = 0; let visibleCount = 0;
+
         models.forEach(m => {
-            const costIn = (count / 1000000) * m.input;
-            const costOut = ((count * ratio) / 1000000) * m.output;
-            const total = costIn + costOut;
-            totalSum += total;
-            
-            html += `<tr>
-                <td class="model-name" onclick="showInfo('${m.name}')">${m.name}</td>
-                <td class="num">$${costIn.toFixed(4)}</td>
-                <td class="num">$${costOut.toFixed(4)}</td>
-                <td class="num" style="font-weight:bold; color:var(--brand); background:var(--accent-bg)">$${total.toFixed(4)}</td>
-            </tr>`;
+            // Check if model matches search filter
+            if (m.name.toLowerCase().includes(searchTerm)) {
+                const costIn = (count / 1000000) * m.input;
+                const costOut = ((count * ratio) / 1000000) * m.output;
+                const total = costIn + costOut;
+                totalSum += total;
+                visibleCount++;
+                
+                html += `<tr>
+                    <td class="model-name" onclick="showInfo('${m.name}')">${m.name}</td>
+                    <td class="num">$${costIn.toFixed(4)}</td>
+                    <td class="num">$${costOut.toFixed(4)}</td>
+                    <td class="num" style="font-weight:bold; color:var(--brand); background:var(--accent-bg)">$${total.toFixed(4)}</td>
+                </tr>`;
+            }
         });
         
-        document.getElementById('table-body').innerHTML = html;
-        document.getElementById('total-cost').innerText = '$' + (models.length ? (totalSum / models.length).toFixed(4) : "0.00");
+        document.getElementById('table-body').innerHTML = html || '<tr><td colspan="4" style="text-align:center; padding:20px;">No models match your search.</td></tr>';
         
+        // Average total cost based on what's visible
+        document.getElementById('total-cost').innerText = '$' + (visibleCount ? (totalSum / visibleCount).toFixed(4) : "0.00");
+        
+        // Token Visualizer
         const viz = document.getElementById('viz');
         viz.innerHTML = '<small style="display:block;margin-bottom:8px;color:var(--text-muted)">Token Visualization:</small>';
         tokens.slice(0, 100).forEach((t, i) => {
@@ -198,7 +215,7 @@
         const m = models.find(x => x.name === name);
         if(!m) return;
         document.getElementById('m-title').innerText = m.name;
-        document.getElementById('m-desc').innerText = m.info || "Technical specs for " + m.name + " are not yet listed. Contact admin to update info fields in models.json.";
+        document.getElementById('m-desc').innerText = m.info || "Technical specs for " + m.name + " are not yet listed.";
         document.getElementById('info-modal').classList.add('active');
     }
 
