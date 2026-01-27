@@ -1,47 +1,89 @@
-<script src="https://cdn.jsdelivr.net/npm/js-tiktoken@1.0.7/dist/index.min.js"></script>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Token Calculator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/js-tiktoken@1.0.7/dist/index.min.js"></script>
+    <style>
+        .token-badge { display: inline-block; padding: 0 4px; border-radius: 4px; margin: 1px; border: 1px solid rgba(0,0,0,0.1); font-family: monospace; }
+    </style>
+</head>
+<body class="bg-slate-100 p-4 md:p-10">
+    <div class="max-w-3xl mx-auto space-y-6">
+        <div class="bg-white p-8 rounded-2xl shadow-sm border border-slate-200">
+            <div class="flex justify-between items-center mb-6">
+                <h1 class="text-2xl font-bold text-slate-800">Token Calculator</h1>
+                <span id="status-pill" class="px-3 py-1 rounded-full text-xs font-bold bg-amber-100 text-amber-700">Initializing...</span>
+            </div>
 
-<script>
-    // 2. Wait for the page and library to be fully ready
-    window.addEventListener('load', () => {
-        try {
-            // Initialize the encoder
-            const enc = tiktoken.getEncoding("cl100k_base");
-            const colors = ['#fee2e2', '#fef3c7', '#dcfce7', '#dbeafe', '#f3e8ff', '#fae8ff'];
+            <textarea id="input" class="w-full h-48 p-4 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all mb-6" placeholder="Loading tokenizer..."></textarea>
+            
+            <div class="flex gap-4">
+                <div class="flex-1 bg-blue-50 p-4 rounded-xl border border-blue-100 text-center">
+                    <div class="text-sm text-blue-600 font-bold uppercase tracking-wider">Tokens</div>
+                    <div id="t-count" class="text-4xl font-mono font-black text-blue-900">0</div>
+                </div>
+                <div class="flex-1 bg-slate-50 p-4 rounded-xl border border-slate-200 text-center">
+                    <div class="text-sm text-slate-500 font-bold uppercase tracking-wider">Characters</div>
+                    <div id="c-count" class="text-4xl font-mono font-black text-slate-700">0</div>
+                </div>
+            </div>
+        </div>
 
+        <div class="bg-white p-8 rounded-2xl shadow-sm border border-slate-200">
+            <h2 class="text-sm font-bold text-slate-400 uppercase tracking-widest mb-4">Visual Breakdown</h2>
+            <div id="visualizer" class="whitespace-pre-wrap leading-relaxed min-h-[100px] text-lg text-slate-800"></div>
+        </div>
+    </div>
+
+    <script>
+        // Use window.onload to ensure the external library is fully parsed
+        window.onload = function() {
+            const status = document.getElementById('status-pill');
             const input = document.getElementById('input');
             const visualizer = document.getElementById('visualizer');
             const tCount = document.getElementById('t-count');
             const cCount = document.getElementById('c-count');
 
-            input.placeholder = "Tokenizer ready! Type here...";
+            try {
+                // Accessing the library via the global 'tiktoken' object
+                const enc = tiktoken.getEncoding("cl100k_base");
+                const colors = ['#dbeafe', '#fef3c7', '#dcfce7', '#fee2e2', '#f3e8ff'];
 
-            input.addEventListener('input', () => {
-                const text = input.value;
-                if (!text) {
-                    tCount.innerText = '0';
-                    cCount.innerText = '0';
+                status.innerText = "Ready";
+                status.className = "px-3 py-1 rounded-full text-xs font-bold bg-green-100 text-green-700";
+                input.placeholder = "Paste your text here to count tokens...";
+
+                input.addEventListener('input', () => {
+                    const val = input.value;
+                    if (!val) {
+                        tCount.innerText = '0';
+                        cCount.innerText = '0';
+                        visualizer.innerHTML = '';
+                        return;
+                    }
+
+                    const tokens = enc.encode(val);
+                    tCount.innerText = tokens.length;
+                    cCount.innerText = val.length;
+
                     visualizer.innerHTML = '';
-                    return;
-                }
-
-                const tokens = enc.encode(text);
-                tCount.innerText = tokens.length;
-                cCount.innerText = text.length;
-
-                visualizer.innerHTML = '';
-                tokens.forEach((tokenId, index) => {
-                    const chunk = enc.decode([tokenId]);
-                    const span = document.createElement('span');
-                    span.className = 'token-badge';
-                    span.style.backgroundColor = colors[index % colors.length];
-                    // Handle spaces and newlines visually
-                    span.innerText = chunk; 
-                    visualizer.appendChild(span);
+                    tokens.forEach((id, i) => {
+                        const span = document.createElement('span');
+                        span.className = 'token-badge';
+                        span.style.backgroundColor = colors[i % colors.length];
+                        span.innerText = enc.decode([id]);
+                        visualizer.appendChild(span);
+                    });
                 });
-            });
-        } catch (err) {
-            console.error("Initialization failed:", err);
-            document.querySelector('h1').innerText = "Error Loading Tokenizer";
-        }
-    });
-</script>
+            } catch (e) {
+                console.error(e);
+                status.innerText = "Error: Library blocked";
+                status.className = "px-3 py-1 rounded-full text-xs font-bold bg-red-100 text-red-700";
+            }
+        };
+    </script>
+</body>
+</html>
