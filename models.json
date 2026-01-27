@@ -1,12 +1,12 @@
 [
-  { "name": "GPT-5 (Flagship)", "input": 1.25, "output": 10.00, "limit": 128000 },
-  { "name": "GPT-5.2 Pro (Reasoning)", "input": 15.00, "output": 120.00, "limit": 128000 },
-  { "name": "o3 (Thinking)", "input": 2.00, "output": 8.00, "limit": 200000 },
-  { "name": "Claude 4.5 Opus", "input": 5.00, "output": 25.00, "limit": 200000 },
-  { "name": "Claude 4.5 Sonnet", "input": 3.00, "output": 15.00, "limit": 200000 },
-  { "name": "Gemini 3 Pro", "input": 1.25, "output": 10.00, "limit": 2000000 },
-  { "name": "Gemini 3 Flash", "input": 0.10, "output": 0.40, "limit": 1000000 },
-  { "name": "DeepSeek-V3", "input": 0.14, "output": 0.28, "limit": 128000 },
-  { "name": "Llama 4 Maverick", "input": 0.20, "output": 0.20, "limit": 128000 },
-  { "name": "Grok 4.0", "input": 3.00, "output": 15.00, "limit": 128000 }
+  { "name": "GPT-5 (Flagship)", "input": 1.25, "output": 10.00, "limit": 128000, "why": "Best for general purpose complex tasks." },
+  { "name": "GPT-5.2 Pro (Reasoning)", "input": 15.00, "output": 120.00, "limit": 128000, "why": "High-level logical deduction & math." },
+  { "name": "o3 (Thinking)", "input": 2.00, "output": 8.00, "limit": 200000, "why": "Deep chain-of-thought processing." },
+  { "name": "Claude 4.5 Opus", "input": 5.00, "output": 25.00, "limit": 200000, "why": "Top-tier creative writing & coding." },
+  { "name": "Claude 4.5 Sonnet", "input": 3.00, "output": 15.00, "limit": 200000, "why": "Balanced speed and intelligence." },
+  { "name": "Gemini 3 Pro", "input": 1.25, "output": 10.00, "limit": 2000000, "why": "Massive context window analysis." },
+  { "name": "Gemini 3 Flash", "input": 0.10, "output": 0.40, "limit": 1000000, "why": "Ultra-fast, low-cost automation." },
+  { "name": "DeepSeek-V3", "input": 0.14, "output": 0.28, "limit": 128000, "why": "Efficiency leader for open weights." },
+  { "name": "Llama 4 Maverick", "input": 0.20, "output": 0.20, "limit": 128000, "why": "Best performance-to-cost ratio." },
+  { "name": "Grok 4.0", "input": 3.00, "output": 15.00, "limit": 128000, "why": "Real-time info & unhinged reasoning." }
 ]
