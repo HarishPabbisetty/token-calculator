@@ -1,186 +1,102 @@
----
-layout: default
-title: AI Token Counter Pro
----
-
 <style>
   :root {
-    --base-font: clamp(14px, 1.1vw, 15px);
-    --stat-font: clamp(22px, 2.5vw, 32px);
+    --sidebar-w: 260px;
+    --brand: #2563eb;
+    --border: #eef0f2;
+    --bg-app: #f4f7fa;
   }
 
-  section { max-width: 1000px !important; margin: 0 auto !important; padding: 20px !important; font-size: var(--base-font); }
-  
-  .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; margin-bottom: 20px; }
-  .stat-card { padding: 12px; border-radius: 8px; text-align: center; border: 1px solid #e1e4e8; background: #fafbfc; }
-  .stat-label { color: #586069; font-size: 0.7rem; font-weight: bold; text-transform: uppercase; }
-  .stat-val { font-size: var(--stat-font); font-weight: 800; color: #24292e; }
+  body { background: var(--bg-app); font-family: 'Inter', sans-serif; margin: 0; }
 
-  .control-panel { 
-    background: #f6f8fa; padding: 20px; border-radius: 12px; border: 1px solid #d1d5da; 
-    display: flex; flex-direction: column; gap: 15px; margin-bottom: 20px; 
-  }
-  .control-row { display: flex; gap: 15px; align-items: center; flex-wrap: wrap; }
-  
-  #search-box { flex-grow: 1; padding: 10px; border: 1px solid #d1d5da; border-radius: 6px; }
-  
-  .setting-group { display: flex; align-items: center; gap: 10px; background: #fff; padding: 8px 12px; border-radius: 6px; border: 1px solid #d1d5da; }
-  .setting-label { font-size: 0.8rem; font-weight: bold; color: #444; }
-
-  textarea#token-input {
-    width: 100%; padding: 15px; border: 1px solid #d1d5da; border-radius: 10px;
-    font-size: 1rem; line-height: 1.5; min-height: 140px; box-sizing: border-box;
+  /* Dashboard Grid Layout */
+  .dashboard-wrapper {
+    display: grid;
+    grid-template-columns: var(--sidebar-w) 1fr;
+    grid-template-rows: 70px 1fr;
+    height: 100vh;
   }
 
-  .price-container { border: 1px solid #e1e4e8; border-radius: 10px; overflow-x: auto; background: #fff; margin-top: 15px; }
-  table { width: 100%; border-collapse: collapse; min-width: 650px; }
-  th { background: #f6f8fa; text-align: right; padding: 12px; color: #586069; font-size: 0.7rem; text-transform: uppercase; border-bottom: 2px solid #e1e4e8; }
-  th:first-child { text-align: left; }
-  td { padding: 12px; border-bottom: 1px solid #f6f8fa; font-size: 0.9rem; text-align: right; }
-  td:first-child { text-align: left; }
-  
-  .cost-val { font-family: 'Courier New', monospace; font-weight: 600; }
-  .total-cell { color: #28a745; font-weight: 800; background: #f0fff4; border-left: 2px solid #e1e4e8; }
+  /* Fixed Sidebar */
+  aside {
+    grid-row: 1 / 3;
+    background: white;
+    border-right: 1px solid var(--border);
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
 
-  #visualizer { background: #1a1a1a; padding: 15px; border-radius: 8px; margin-top: 20px; display: flex; flex-wrap: wrap; gap: 4px; }
-  .token-box { color: #000; padding: 1px 4px; border-radius: 3px; font-family: monospace; font-size: 0.7rem; font-weight: bold; }
+  /* Header Bar */
+  header {
+    background: white;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    padding: 0 32px;
+    justify-content: space-between;
+  }
+
+  /* Workspace Scroll Area */
+  main {
+    padding: 32px;
+    overflow-y: auto;
+    display: grid;
+    grid-template-columns: 3fr 2fr; /* 3 parts Input, 2 parts Table */
+    gap: 24px;
+    align-items: start;
+  }
+
+  /* Minimalist Stats Cards */
+  .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 24px; }
+  .stat-card { background: white; padding: 20px; border-radius: 12px; border: 1px solid var(--border); }
+  .stat-val { font-size: 24px; font-weight: 800; display: block; margin-top: 4px; }
+
+  /* Input & Results Styling */
+  .glass-card { background: white; border-radius: 16px; border: 1px solid var(--border); padding: 24px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); }
+  textarea { width: 100%; border: none; background: transparent; font-size: 16px; min-height: 400px; resize: none; outline: none; }
+  
+  /* Comparison Highlights */
+  .highlight-row { background: #f0f7ff; font-weight: 700; color: var(--brand); }
 </style>
 
-<div class="stats-grid">
-  <div class="stat-card"><div class="stat-label">Tokens</div><div id="t-count" class="stat-val">0</div></div>
-  <div class="stat-card"><div class="stat-label">Words</div><div id="w-count" class="stat-val">0</div></div>
-  <div class="stat-card"><div class="stat-label">Chars</div><div id="c-count" class="stat-val">0</div></div>
-</div>
+<div class="dashboard-wrapper">
+  <aside>
+    <div style="font-weight: 900; font-size: 20px; color: var(--brand);">TOKENS.io</div>
+    <div class="stat-label">Recent History</div>
+    <div id="history-list"></div>
+    <button class="btn" style="margin-top:auto" onclick="saveToHistory()">Save to Workspace</button>
+  </aside>
 
-<div class="control-panel">
-  <div class="control-row">
-    <input type="search" id="search-box" placeholder="Filter models (e.g. OpenAI)..." oninput="renderPricing()">
-    <div class="setting-group">
-      <span class="setting-label">Currency:</span>
-      <select id="currency-select" onchange="changeCurrency(this.value)">
-        <option value="USD">$ USD</option>
-        <option value="EUR">€ EUR</option>
-        <option value="GBP">£ GBP</option>
-        <option value="INR">₹ INR</option>
-        <option value="JPY">¥ JPY</option>
+  <header>
+    <div style="display:flex; gap:16px">
+      <input type="search" placeholder="Filter models..." class="search-pill" oninput="renderPricing()">
+      <select onchange="changeCurrency(this.value)" class="currency-select">
+        <option value="USD">USD ($)</option>
+        <option value="EUR">EUR (€)</option>
+        <option value="INR">INR (₹)</option>
       </select>
     </div>
-  </div>
-  
-  <div class="control-row">
-    <div class="setting-group" style="flex-grow: 1;">
-      <span class="setting-label">Output Ratio: <span id="ratio-val">1.0</span>x</span>
-      <input type="range" id="ratio-slider" min="0.1" max="10" step="0.1" value="1.0" oninput="updateRatio(this.value)" style="flex-grow:1">
+    <div id="avg-cost-header" class="stat-val" style="font-size:18px; color:var(--brand)">$0.00 Avg.</div>
+  </header>
+
+  <main>
+    <div class="glass-card">
+      <div class="stats-grid">
+        <div class="stat-card"><span class="stat-label">Tokens</span><span id="t-count" class="stat-val">0</span></div>
+        <div class="stat-card"><span class="stat-label">Words</span><span id="w-count" class="stat-val">0</span></div>
+        <div class="stat-card"><span class="stat-label">Chars</span><span id="c-count" class="stat-val">0</span></div>
+      </div>
+      <textarea id="token-input" placeholder="Drop your context here..."></textarea>
     </div>
-    <button class="action-btn" onclick="showExample()">Example</button>
-    <button class="action-btn" style="color:#d73a49;" onclick="clearAll()">Clear</button>
-  </div>
+
+    <div class="glass-card" style="padding:0">
+      <table id="price-table">
+        <thead style="background:#f9fafb">
+          <tr><th style="padding:16px">Model</th><th style="text-align:right">Input</th><th style="text-align:right">Total</th></tr>
+        </thead>
+        <tbody id="price-table-body"></tbody>
+      </table>
+    </div>
+  </main>
 </div>
-
-<textarea id="token-input" placeholder="Enter or paste text here..."></textarea>
-
-<div class="price-container">
-  <table>
-    <thead>
-      <tr>
-        <th>Model Name</th>
-        <th>Input Cost</th>
-        <th>Output Cost</th>
-        <th style="width: 150px;">Total (In + Out)</th>
-      </tr>
-    </thead>
-    <tbody id="price-table-body"></tbody>
-  </table>
-</div>
-
-<div id="visualizer"></div>
-
-<script src="https://unpkg.com/gpt-tokenizer/dist/cl100k_base.js"></script>
-<script>
-  let currentTokenCount = 0;
-  let modelData = [];
-  let outputMultiplier = 1.0;
-  let exchangeRates = { USD: 1.0 };
-  let selectedCurrency = 'USD';
-  const symbols = { USD: '$', EUR: '€', GBP: '£', INR: '₹', JPY: '¥' };
-
-  async function init() {
-    try {
-      const [mRes, rRes] = await Promise.all([
-        fetch('models.json'),
-        fetch('https://api.frankfurter.dev/v1/latest?base=USD')
-      ]);
-      modelData = await mRes.json();
-      const rateData = await rRes.json();
-      exchangeRates = { ...exchangeRates, ...rateData.rates };
-      renderPricing();
-    } catch (err) {
-      console.error("Initialization failed", err);
-    }
-  }
-
-  function updateRatio(val) {
-    outputMultiplier = parseFloat(val);
-    document.getElementById('ratio-val').innerText = outputMultiplier.toFixed(1);
-    renderPricing();
-  }
-
-  function changeCurrency(cc) {
-    selectedCurrency = cc;
-    renderPricing();
-  }
-
-  function formatPrice(usdVal) {
-    const rate = exchangeRates[selectedCurrency] || 1;
-    const val = usdVal * rate;
-    const sym = symbols[selectedCurrency];
-    if (val === 0) return sym + "0.00";
-    return sym + (val < 0.01 ? val.toFixed(5) : val.toLocaleString(undefined, {minimumFractionDigits: 3, maximumFractionDigits: 3}));
-  }
-
-  function renderPricing() {
-    const tableBody = document.getElementById('price-table-body');
-    const filter = document.getElementById('search-box').value.toLowerCase();
-    tableBody.innerHTML = '';
-
-    modelData.filter(m => m.name.toLowerCase().includes(filter)).forEach(m => {
-      const inputCost = (currentTokenCount / 1000000) * m.input;
-      const outputCost = (currentTokenCount * outputMultiplier / 1000000) * m.output;
-      
-      tableBody.innerHTML += `<tr>
-        <td><strong>${m.name}</strong></td>
-        <td class="cost-val">${formatPrice(inputCost)}</td>
-        <td class="cost-val" style="color:#0366d6;">${formatPrice(outputCost)}</td>
-        <td class="cost-val total-cell">${formatPrice(inputCost + outputCost)}</td>
-      </tr>`;
-    });
-  }
-
-  function updateUI(text) {
-    const tokens = text ? GPTTokenizer_cl100k_base.encode(text) : [];
-    currentTokenCount = tokens.length;
-    document.getElementById('t-count').innerText = currentTokenCount.toLocaleString();
-    document.getElementById('w-count').innerText = text.trim() ? text.trim().split(/\s+/).length.toLocaleString() : 0;
-    document.getElementById('c-count').innerText = text.length.toLocaleString();
-    renderPricing();
-    
-    const vis = document.getElementById('visualizer');
-    vis.innerHTML = '';
-    const colors = ['#818cf8', '#fbbf24', '#34d399', '#f87171', '#a78bfa'];
-    tokens.slice(0, 200).forEach((id, i) => {
-      const div = document.createElement('div');
-      div.className = 'token-box';
-      div.style.backgroundColor = colors[i % colors.length];
-      div.textContent = GPTTokenizer_cl100k_base.decode([id]);
-      vis.appendChild(div);
-    });
-  }
-
-  document.getElementById('token-input').addEventListener('input', (e) => updateUI(e.target.value));
-  function clearAll() { document.getElementById('token-input').value = ''; updateUI(''); }
-  function showExample() { 
-    const txt = "AI costs in 2026 are highly dependent on the reasoning depth required for the task.";
-    document.getElementById('token-input').value = txt; updateUI(txt); 
-  }
-  init();
-</script>
