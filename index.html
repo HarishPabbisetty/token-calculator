@@ -4,47 +4,58 @@ title: AI Token Counter
 ---
 
 <style>
-  /* 1. Global Compactness */
-  #main_content, section { max-width: 800px !important; margin: 0 auto !important; padding: 10px !important; }
+  /* 1. Force Theme Colors to Blue */
+  :root { --ai-blue: #0366d6; --dark-blue: #05264c; --light-blue: #f0f7ff; }
   
+  /* Overriding Jekyll Theme Defaults */
+  body { color: #24292e; }
+  header h1 a { color: var(--ai-blue) !important; }
+  section { max-width: 800px !important; margin: 0 auto !important; padding: 10px !important; }
+
   /* 2. Compact Blue Stats */
   .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 15px; }
-  .stat-card { padding: 10px; border-radius: 8px; text-align: center; border: 1px solid #d0e7ff; background: #f0f7ff; }
-  .stat-label { color: #0366d6; font-size: 10px; font-weight: bold; text-transform: uppercase; }
-  .stat-val { font-size: 24px; font-weight: 800; color: #05264c; line-height: 1.2; }
+  .stat-card { 
+    padding: 12px; border-radius: 8px; text-align: center; 
+    border: 1px solid #c8e1ff !important; 
+    background: var(--light-blue) !important; 
+  }
+  .stat-label { color: var(--ai-blue); font-size: 10px; font-weight: bold; text-transform: uppercase; }
+  .stat-val { font-size: 24px; font-weight: 800; color: var(--dark-blue); line-height: 1.2; }
 
   /* 3. Streamlined Input */
   .control-bar { display: flex; gap: 8px; margin-bottom: 8px; justify-content: flex-end; }
   .action-btn { background: #fff; border: 1px solid #d1d5da; padding: 4px 10px; border-radius: 4px; font-size: 11px; cursor: pointer; }
-  .action-btn:hover { border-color: #0366d6; color: #0366d6; }
+  .action-btn:hover { border-color: var(--ai-blue); color: var(--ai-blue); }
   
   textarea#token-input {
-    width: 100%; padding: 12px; border: 1px solid #0366d6; border-radius: 6px;
-    font-size: 14px; line-height: 1.4; background-color: #fff; min-height: 120px;
-    box-sizing: border-box;
+    width: 100%; padding: 12px; 
+    border: 2px solid var(--ai-blue) !important; /* Forced Blue Border */
+    border-radius: 6px; font-size: 14px; line-height: 1.4; 
+    background-color: #fff; min-height: 110px; box-sizing: border-box;
   }
 
-  /* 4. Compact Pricing */
+  /* 4. Compact Pricing Table */
   .price-header { display: flex; justify-content: space-between; align-items: center; margin-top: 20px; margin-bottom: 8px; }
   .toggle-container { background: #eef6ff; padding: 2px; border-radius: 15px; border: 1px solid #d0e7ff; display: flex; }
-  .toggle-btn { border: none; padding: 4px 12px; border-radius: 12px; cursor: pointer; font-size: 10px; font-weight: bold; background: transparent; color: #0366d6; }
-  .toggle-btn.active { background: #0366d6; color: white; }
+  .toggle-btn { border: none; padding: 4px 12px; border-radius: 12px; cursor: pointer; font-size: 10px; font-weight: bold; background: transparent; color: var(--ai-blue); }
+  .toggle-btn.active { background: var(--ai-blue) !important; color: white !important; }
 
   .price-container { border: 1px solid #d0e7ff; border-radius: 6px; overflow: hidden; }
-  table { width: 100%; border-collapse: collapse; font-size: 12px; }
-  th { background: #f0f7ff; text-align: left; padding: 8px 12px; color: #0366d6; border-bottom: 1px solid #d0e7ff; }
-  td { padding: 6px 12px; border-bottom: 1px solid #f0f7ff; }
+  table { width: 100%; border-collapse: collapse; font-size: 12px; margin: 0 !important; }
+  th { background: var(--ai-blue) !important; text-align: left; padding: 8px 12px; color: white !important; border: none; }
+  td { padding: 6px 12px; border-bottom: 1px solid #f0f7ff; background: white; }
   .cost-val { font-family: monospace; font-weight: bold; color: #28a745; text-align: right; }
 
-  /* 5. Visualizer Fix */
+  /* 5. Visualizer (Dark Blue Space) */
   #visualizer {
-    background: #05264c; padding: 15px; border-radius: 8px; margin-top: 10px;
-    display: flex; flex-wrap: wrap; gap: 6px 4px; min-height: 50px;
+    background: var(--dark-blue) !important; 
+    padding: 15px; border-radius: 8px; margin-top: 15px;
+    display: flex; flex-wrap: wrap; gap: 8px 5px; min-height: 50px;
   }
   .token-box {
-    color: #1a1a1a; padding: 1px 5px; border-radius: 3px;
-    font-family: monospace; font-size: 11px; font-weight: 700;
-    white-space: pre-wrap; display: inline-block; line-height: 1.3 !important;
+    color: #1a1a1a; padding: 2px 6px; border-radius: 3px;
+    font-family: "SFMono-Regular", Consolas, monospace; font-size: 11px; font-weight: 700;
+    white-space: pre-wrap; display: inline-block; line-height: 1.4 !important;
   }
 </style>
 
@@ -65,13 +76,13 @@ title: AI Token Counter
 
 <div class="control-bar">
   <button class="action-btn" onclick="showExample()">Example</button>
-  <button class="action-btn" style="color:#d73a49" onclick="clearAll()">Clear</button>
+  <button class="action-btn" style="color:#d73a49; border-color:#f5b0b0;" onclick="clearAll()">Clear</button>
 </div>
 
-<textarea id="token-input" placeholder="Enter text..."></textarea>
+<textarea id="token-input" placeholder="Paste text here..."></textarea>
 
 <div class="price-header">
-  <div style="font-size: 12px; font-weight: bold; color: #05264c;">ESTIMATED COST</div>
+  <div style="font-size: 11px; font-weight: bold; color: var(--dark-blue); letter-spacing: 0.5px;">ESTIMATED COST (USD)</div>
   <div class="toggle-container">
     <button id="btn-input" class="toggle-btn active" onclick="setPricingType('input')">Input</button>
     <button id="btn-output" class="toggle-btn" onclick="setPricingType('output')">Output</button>
@@ -92,6 +103,8 @@ title: AI Token Counter
 <script>
   let currentType = 'input';
   let currentTokenCount = 0;
+  
+  // Prices per 1M tokens
   const models = [
     { name: "GPT-4o", input: 2.50, output: 10.00 },
     { name: "GPT-4o mini", input: 0.15, output: 0.60 },
@@ -101,7 +114,7 @@ title: AI Token Counter
 
   function clearAll() { document.getElementById('token-input').value = ''; updateUI(''); }
   function showExample() { 
-    const ex = "Paste text here to see the token breakdown and estimated costs.";
+    const ex = "This tool helps you estimate API costs. Tokens are the basic units of text processed by AI.";
     document.getElementById('token-input').value = ex; 
     updateUI(ex); 
   }
@@ -126,10 +139,11 @@ title: AI Token Counter
   function updateUI(text) {
     const tokens = text ? GPTTokenizer_cl100k_base.encode(text) : [];
     currentTokenCount = tokens.length;
-    document.getElementById('t-count').innerText = currentTokenCount;
-    document.getElementById('w-count').innerText = text.trim() ? text.trim().split(/\s+/).length : 0;
-    document.getElementById('c-count').innerText = text.length;
+    document.getElementById('t-count').innerText = currentTokenCount.toLocaleString();
+    document.getElementById('w-count').innerText = text.trim() ? text.trim().split(/\s+/).length.toLocaleString() : 0;
+    document.getElementById('c-count').innerText = text.length.toLocaleString();
     renderPricing();
+    
     const visualizer = document.getElementById('visualizer');
     visualizer.innerHTML = '';
     const colors = ['#818cf8', '#fbbf24', '#34d399', '#f87171', '#a78bfa', '#22d3ee'];
