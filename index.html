@@ -4,10 +4,10 @@ title: AI Token Counter
 ---
 
 <style>
-  /* 1. Layout & Theme Reversion */
+  /* 1. Layout & Theme Settings */
   section { max-width: 800px !important; margin: 0 auto !important; padding: 10px !important; }
   
-  /* 2. Original GitHub-Style Stats */
+  /* 2. Compact Stats */
   .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 15px; }
   .stat-card { 
     padding: 12px; border-radius: 8px; text-align: center; 
@@ -16,7 +16,7 @@ title: AI Token Counter
   .stat-label { color: #586069; font-size: 10px; font-weight: bold; text-transform: uppercase; }
   .stat-val { font-size: 24px; font-weight: 800; color: #24292e; line-height: 1.2; }
 
-  /* 3. Original Controls & Input */
+  /* 3. Input Area */
   .control-bar { display: flex; gap: 8px; margin-bottom: 8px; justify-content: flex-end; }
   .action-btn { background: #fff; border: 1px solid #d1d5da; padding: 4px 10px; border-radius: 4px; font-size: 11px; cursor: pointer; color: #24292e; }
   .action-btn:hover { background: #f6f8fa; border-color: #1b1f23; }
@@ -27,19 +27,16 @@ title: AI Token Counter
     box-sizing: border-box;
   }
 
-  /* 4. Classic Pricing Table */
-  .price-header { display: flex; justify-content: space-between; align-items: center; margin-top: 20px; margin-bottom: 8px; }
-  .toggle-container { background: #f1f8ff; padding: 2px; border-radius: 15px; border: 1px solid #c8e1ff; display: flex; }
-  .toggle-btn { border: none; padding: 4px 12px; border-radius: 12px; cursor: pointer; font-size: 10px; font-weight: bold; background: transparent; color: #0366d6; }
-  .toggle-btn.active { background: #0366d6; color: white; }
-
+  /* 4. Multi-Column Pricing Table */
+  .price-header { margin-top: 20px; margin-bottom: 8px; font-size: 11px; font-weight: bold; color: #586069; text-transform: uppercase; }
   .price-container { border: 1px solid #e1e4e8; border-radius: 6px; overflow: hidden; background: #fff; }
   table { width: 100%; border-collapse: collapse; font-size: 12px; margin: 0 !important; }
   th { background: #f6f8fa; text-align: left; padding: 8px 12px; color: #586069; border-bottom: 1px solid #e1e4e8; }
-  td { padding: 6px 12px; border-bottom: 1px solid #f6f8fa; }
+  td { padding: 8px 12px; border-bottom: 1px solid #f6f8fa; }
   .cost-val { font-family: monospace; font-weight: bold; color: #28a745; text-align: right; }
+  .col-label { color: #6a737d; font-size: 10px; font-weight: normal; display: block; }
 
-  /* 5. THE CHROME OVERLAP FIX (Kept from previous version) */
+  /* 5. Chrome Overlap Fix */
   #visualizer {
     background: #24292e; padding: 15px; border-radius: 8px; margin-top: 15px;
     display: flex; flex-wrap: wrap; gap: 8px 5px; min-height: 50px;
@@ -73,17 +70,17 @@ title: AI Token Counter
 
 <textarea id="token-input" placeholder="Paste text here..."></textarea>
 
-<div class="price-header">
-  <div style="font-size: 11px; font-weight: bold; color: #586069; text-transform: uppercase;">Estimated Cost (USD)</div>
-  <div class="toggle-container">
-    <button id="btn-input" class="toggle-btn active" onclick="setPricingType('input')">Input</button>
-    <button id="btn-output" class="toggle-btn" onclick="setPricingType('output')">Output</button>
-  </div>
-</div>
+<div class="price-header">Estimated Costs (USD)</div>
 
 <div class="price-container">
   <table>
-    <thead><tr><th>Model</th><th style="text-align: right;">Cost</th></tr></thead>
+    <thead>
+      <tr>
+        <th>Model</th>
+        <th style="text-align: right;">If Input</th>
+        <th style="text-align: right;">If Output</th>
+      </tr>
+    </thead>
     <tbody id="price-table-body"></tbody>
   </table>
 </div>
@@ -93,7 +90,6 @@ title: AI Token Counter
 <script src="https://unpkg.com/gpt-tokenizer/dist/cl100k_base.js"></script>
 
 <script>
-  let currentType = 'input';
   let currentTokenCount = 0;
   const models = [
     { name: "GPT-4o", input: 2.50, output: 10.00 },
@@ -104,25 +100,28 @@ title: AI Token Counter
 
   function clearAll() { document.getElementById('token-input').value = ''; updateUI(''); }
   function showExample() { 
-    const ex = "This tool calculates tokens locally in your browser. No data is sent to any server.";
+    const ex = "Paste text here to compare input and output costs across different models.";
     document.getElementById('token-input').value = ex; 
     updateUI(ex); 
   }
 
-  function setPricingType(type) {
-    currentType = type;
-    document.getElementById('btn-input').classList.toggle('active', type === 'input');
-    document.getElementById('btn-output').classList.toggle('active', type === 'output');
-    renderPricing();
+  function formatPrice(val) {
+    if (val === 0) return "$0.00";
+    return val < 0.0001 ? "$" + val.toFixed(7) : "$" + val.toFixed(5);
   }
 
   function renderPricing() {
     const tableBody = document.getElementById('price-table-body');
     tableBody.innerHTML = '';
     models.forEach(m => {
-      const totalCost = (currentTokenCount / 1000000) * m[currentType];
-      const displayCost = totalCost === 0 ? "$0.00" : (totalCost < 0.0001 ? "$" + totalCost.toFixed(7) : "$" + totalCost.toFixed(5));
-      tableBody.innerHTML += `<tr><td><strong>${m.name}</strong></td><td class="cost-val">${displayCost}</td></tr>`;
+      const inputCost = (currentTokenCount / 1000000) * m.input;
+      const outputCost = (currentTokenCount / 1000000) * m.output;
+      
+      tableBody.innerHTML += `<tr>
+        <td><strong>${m.name}</strong></td>
+        <td class="cost-val">${formatPrice(inputCost)}</td>
+        <td class="cost-val" style="color:#0366d6;">${formatPrice(outputCost)}</td>
+      </tr>`;
     });
   }
 
@@ -133,6 +132,7 @@ title: AI Token Counter
     document.getElementById('w-count').innerText = text.trim() ? text.trim().split(/\s+/).length.toLocaleString() : 0;
     document.getElementById('c-count').innerText = text.length.toLocaleString();
     renderPricing();
+    
     const visualizer = document.getElementById('visualizer');
     visualizer.innerHTML = '';
     const colors = ['#818cf8', '#fbbf24', '#34d399', '#f87171', '#a78bfa', '#22d3ee'];
