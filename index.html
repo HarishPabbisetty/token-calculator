@@ -4,10 +4,10 @@ title: AI Token Counter
 ---
 
 <style>
-  /* 1. Theme Override - Expand width */
+  /* 1. Expand Width & Fix Theme Clashes */
   section { width: 100% !important; max-width: 850px !important; }
   
-  /* 2. Layout Elements */
+  /* 2. Stats Grid */
   .stats-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px; margin-bottom: 25px; }
   .stat-card { padding: 15px; border-radius: 12px; text-align: center; border: 1px solid #e1e4e8; }
   .tokens-bg { background-color: #f0f7ff; border-color: #dbeafe; }
@@ -34,17 +34,18 @@ title: AI Token Counter
   th { background: #f6f8fa; text-align: left; padding: 10px 15px; border-bottom: 1px solid #e1e4e8; }
   td { padding: 10px 15px; border-bottom: 1px solid #f1f1f1; }
 
-  /* 5. THE FIX: THE VISUALIZER */
+  /* 5. THE ULTIMATE OVERLAP FIX */
   #visualizer {
-    background: #1e1e1e; /* Darker for better contrast */
-    padding: 20px;
+    background: #1e1e1e;
+    padding: 25px;
     border-radius: 10px;
     margin-top: 15px;
-    /* FLEXBOX is the key to stopping the overlap */
+    /* FLEXBOX prevents overlap by treating tokens as actual bricks */
     display: flex;
     flex-wrap: wrap;
     align-content: flex-start;
-    gap: 6px 4px; /* Vertical gap of 6px, Horizontal gap of 4px */
+    /* This gap ensures 8px vertical space and 4px horizontal space */
+    gap: 8px 4px; 
     min-height: 100px;
   }
 
@@ -55,9 +56,10 @@ title: AI Token Counter
     font-family: "SFMono-Regular", Consolas, monospace;
     font-size: 13px;
     font-weight: 700;
-    white-space: pre; /* Preserves spaces */
-    display: block; /* Acts as a solid unit */
-    line-height: 1.4;
+    white-space: pre-wrap; /* Preserves spaces AND allows wrapping */
+    display: inline-block;
+    /* Force line-height for the token itself so it doesn't get crushed */
+    line-height: 1.4 !important;
   }
 </style>
 
@@ -78,13 +80,13 @@ title: AI Token Counter
 
 <div class="control-bar">
   <button class="action-btn" onclick="showExample()">Example</button>
-  <button class="action-btn" style="color:red" onclick="clearAll()">Clear</button>
+  <button class="action-btn" style="color:red; border-color:#ffcccc" onclick="clearAll()">Clear</button>
 </div>
 
 <textarea id="token-input" placeholder="Paste text here..."></textarea>
 
 <div class="price-header">
-  <h3 style="font-size: 14px; color: #586069; text-transform: uppercase;">Costs</h3>
+  <h3 style="font-size: 14px; color: #586069; text-transform: uppercase;">Estimated Costs</h3>
   <div class="toggle-container">
     <button id="btn-input" class="toggle-btn active" onclick="setPricingType('input')">Input</button>
     <button id="btn-output" class="toggle-btn" onclick="setPricingType('output')">Output</button>
@@ -106,6 +108,8 @@ title: AI Token Counter
 <script>
   let currentType = 'input';
   let currentTokenCount = 0;
+  
+  // Prices per 1 Million Tokens (Updated Jan 2026)
   const models = [
     { name: "GPT-4o", input: 2.50, output: 10.00 },
     { name: "GPT-4o mini", input: 0.15, output: 0.60 },
@@ -114,8 +118,9 @@ title: AI Token Counter
   ];
 
   function clearAll() { document.getElementById('token-input').value = ''; updateUI(''); }
+  
   function showExample() { 
-    const ex = "This tool calculates tokens and estimates costs for different AI models. Try it out!"; 
+    const ex = "This tool is totally private. Your text never leaves your browser because the tokenization happens locally using JavaScript. Try pasting a long document!"; 
     document.getElementById('token-input').value = ex; 
     updateUI(ex); 
   }
@@ -131,18 +136,31 @@ title: AI Token Counter
     const tableBody = document.getElementById('price-table-body');
     tableBody.innerHTML = '';
     models.forEach(m => {
-      const totalCost = (currentTokenCount / 1000000) * m[currentType];
-      const displayCost = totalCost === 0 ? "$0.00" : "$" + totalCost.toFixed(5);
-      tableBody.innerHTML += `<tr><td><strong>${m.name}</strong></td><td style="text-align:right; font-family:monospace; color:green;">${displayCost}</td></tr>`;
+      const pricePerMillion = m[currentType];
+      const totalCost = (currentTokenCount / 1000000) * pricePerMillion;
+      
+      // FIX: Increase precision to 6 decimal places so cheap models don't show $0
+      let displayCost;
+      if (totalCost === 0) {
+        displayCost = "$0.00";
+      } else if (totalCost < 0.00001) {
+        displayCost = "$" + totalCost.toFixed(7); // Extra precision for mini models
+      } else {
+        displayCost = "$" + totalCost.toFixed(5);
+      }
+      
+      tableBody.innerHTML += `<tr><td><strong>${m.name}</strong></td><td style="text-align:right; font-family:monospace; color:#28a745; font-weight:bold;">${displayCost}</td></tr>`;
     });
   }
 
   function updateUI(text) {
     const tokens = text ? GPTTokenizer_cl100k_base.encode(text) : [];
     currentTokenCount = tokens.length;
+    
     document.getElementById('t-count').innerText = currentTokenCount.toLocaleString();
-    document.getElementById('w-count').innerText = (text.trim() ? text.trim().split(/\s+/).length : 0);
+    document.getElementById('w-count').innerText = (text.trim() ? text.trim().split(/\s+/).length : 0).toLocaleString();
     document.getElementById('c-count').innerText = text.length.toLocaleString();
+    
     renderPricing();
 
     const visualizer = document.getElementById('visualizer');
@@ -153,11 +171,17 @@ title: AI Token Counter
       const div = document.createElement('div');
       div.className = 'token-box';
       div.style.backgroundColor = colors[i % colors.length];
-      div.textContent = GPTTokenizer_cl100k_base.decode([id]);
+      
+      // Fix for space display
+      let chunk = GPTTokenizer_cl100k_base.decode([id]);
+      div.textContent = chunk;
+      
       visualizer.appendChild(div);
     });
   }
 
   document.getElementById('token-input').addEventListener('input', (e) => updateUI(e.target.value));
+  
+  // Initialize
   renderPricing();
 </script>
