@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Token Calculator Pro - Responsive</title>
+    <title>Token Calculator Pro - Master Version</title>
     <style>
         :root {
             --sidebar-w: 220px; --brand: #2563eb; --bg-app: #f8fafc;
@@ -15,66 +15,44 @@
             :root { --bg-app: #0f172a; --card-bg: #1e293b; --text-main: #f1f5f9; --text-muted: #94a3b8; --border: #334155; --accent-bg: #1e293b; }
         }
         
-        /* Layout Fix: Responsive Width */
+        /* Responsive Autosize Setup */
         body { margin: 0; font-family: 'Inter', sans-serif; background: var(--bg-app); color: var(--text-main); display: flex; min-height: 100vh; width: 100vw; overflow-x: hidden; }
-        
         aside { width: var(--sidebar-w); min-width: var(--sidebar-w); background: var(--card-bg); border-right: 1px solid var(--border); padding: 16px; display: flex; flex-direction: column; height: 100vh; position: sticky; top: 0; box-sizing: border-box; }
-        
         .main-content { flex: 1; display: flex; flex-direction: column; min-width: 0; width: 100%; }
-        
         header { height: 60px; background: var(--card-bg); border-bottom: 1px solid var(--border); display: flex; align-items: center; padding: 0 20px; justify-content: space-between; box-sizing: border-box; }
-        
-        main { padding: 20px; width: 100%; box-sizing: border-box; max-width: 1600px; margin: 0 auto; }
+        main { padding: 20px; width: 100%; box-sizing: border-box; max-width: 100%; }
 
-        /* Component Styles */
-        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin-bottom: 20px; }
-        .glass-card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 10px; padding: 16px; box-sizing: border-box; }
-        
-        textarea { width: 100%; min-height: 200px; padding: 15px; border-radius: 10px; border: 1px solid var(--border); background: var(--bg-app); color: var(--text-main); font-size: 14px; resize: vertical; box-sizing: border-box; margin-bottom: 10px; }
-        
-        #compare-banner { display: none; background: var(--accent-bg); border: 1px solid var(--brand); border-radius: 8px; padding: 12px; margin-bottom: 15px; }
+        /* Optimization Banner */
+        #compare-banner { display: none; background: var(--accent-bg); border: 1px solid var(--brand); border-radius: 8px; padding: 12px; margin-bottom: 15px; position: relative; }
+        .close-banner { position: absolute; top: 10px; right: 10px; cursor: pointer; font-size: 18px; color: var(--text-muted); font-weight: bold; padding: 0 5px; }
         .compare-split { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 10px; font-size: 12px; }
         .compare-box { background: var(--card-bg); border: 1px dashed var(--border); padding: 8px; border-radius: 6px; white-space: pre-wrap; max-height: 150px; overflow-y: auto; }
 
+        /* Dashboard UI */
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin-bottom: 20px; }
+        .glass-card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 10px; padding: 16px; box-sizing: border-box; }
+        textarea { width: 100%; min-height: 200px; padding: 15px; border-radius: 10px; border: 1px solid var(--border); background: var(--bg-app); color: var(--text-main); font-size: 14px; resize: vertical; box-sizing: border-box; margin-bottom: 10px; }
+        
+        /* Token Viz with Indexing */
         .token-group { display: inline-flex; flex-direction: column; align-items: center; margin: 2px; }
         .token-idx { font-size: 8px; color: var(--text-muted); font-family: monospace; }
         .token-span { padding: 2px 4px; border-radius: 4px; font-family: monospace; font-size: 11px; white-space: pre; }
         
-        .ctx-bar-bg { width: 100%; height: 6px; background: var(--border); border-radius: 10px; margin-top: 6px; overflow: hidden; display: flex; }
-        .ctx-bar-in { height: 100%; background: var(--brand); transition: 0.3s; }
-        .ctx-bar-out { height: 100%; background: #93c5fd; opacity: 0.5; transition: 0.3s; }
-
+        /* Pricing Table */
         .table-wrap { overflow-x: auto; margin-top: 10px; }
         table { width: 100%; border-collapse: collapse; font-size: 13px; min-width: 600px; }
         th, td { text-align: left; padding: 12px; border-bottom: 1px solid var(--border); }
         .num { font-family: monospace; text-align: right; }
-        
-        .btn { padding: 8px 12px; border-radius: 6px; border: 1px solid var(--border); background: var(--card-bg); cursor: pointer; font-size: 13px; font-weight: 500; }
-        .btn-success { background: var(--success); color: white; border: none; }
-        
-        #analysis-modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 999; align-items: center; justify-content: center; }
-
-        /* Responsive Breakpoints */
-        @media (max-width: 768px) {
-            aside { display: none; }
-            .compare-split { grid-template-columns: 1fr; }
-        }
+        .btn { padding: 8px 12px; border-radius: 6px; border: 1px solid var(--border); background: var(--card-bg); cursor: pointer; font-size: 13px; font-weight: 500; transition: 0.2s; }
+        .btn:hover { background: var(--accent-bg); }
     </style>
 </head>
 <body>
 
-<div id="analysis-modal">
-    <div class="glass-card" style="width: 400px; max-width: 90vw;">
-        <h3>🔍 Word Analysis</h3>
-        <div id="analysis-results"></div>
-        <button class="btn" style="width:100%; margin-top:15px;" onclick="closeAnalysis()">Close</button>
-    </div>
-</div>
-
 <aside>
     <h3 style="color:var(--brand); margin-bottom:20px;">Token Calc</h3>
     <div id="history-list" style="flex:1; overflow-y:auto; font-size:11px;"></div>
-    <button class="btn btn-success" style="margin-bottom:8px;" onclick="saveToHistory()">💾 Save Text</button>
+    <button class="btn" style="background:var(--success); color:white; border:none; margin-bottom:8px;" onclick="saveToHistory()">💾 Save Text</button>
     <button class="btn" onclick="clearHistory()">🗑 Clear</button>
 </aside>
 
@@ -93,9 +71,10 @@
 
     <main>
         <div id="compare-banner">
-            <div style="display:flex; justify-content:space-between; align-items:center;">
+            <span class="close-banner" onclick="hideBanner()">×</span>
+            <div style="display:flex; justify-content:space-between; align-items:center; padding-right: 30px;">
                 <span id="compare-text" style="font-weight:700;"></span>
-                <button class="btn" onclick="undoOptimize()">↩ Undo</button>
+                <button class="btn" onclick="undoOptimize()">↩ Undo Changes</button>
             </div>
             <div class="compare-split">
                 <div><small>ORIGINAL</small><div id="old-text-view" class="compare-box"></div></div>
@@ -109,11 +88,10 @@
             <div class="glass-card"><small>PEAK COST</small><div id="peak-val" style="font-size:20px; font-weight:700; color:var(--brand);">$0.00</div></div>
         </div>
 
-        <textarea id="input" placeholder="Type here..." oninput="handleManualInput()"></textarea>
+        <textarea id="input" placeholder="Type or paste your prompt here..." oninput="handleManualInput()"></textarea>
         
         <div style="display:flex; gap:8px; margin-bottom:20px; flex-wrap: wrap;">
-            <button class="btn btn-success" onclick="optimizePrompt()">⚡ Optimize</button>
-            <button class="btn" onclick="showAnalysis()">🔍 Analysis</button>
+            <button class="btn" style="background:var(--success); color:white; border:none;" onclick="optimizePrompt()">⚡ Optimize</button>
             <button class="btn" onclick="jokeExample()">🎭 Example</button>
             <button class="btn" onclick="clearEditor()">Clear</button>
         </div>
@@ -122,7 +100,7 @@
 
         <div class="glass-card">
             <div style="display:flex; justify-content:space-between; margin-bottom:10px; gap: 8px; flex-wrap: wrap;">
-                <input type="text" id="modelSearch" class="btn" style="flex:1" placeholder="Filter models..." oninput="calculate()">
+                <input type="text" id="modelSearch" class="btn" style="flex:1" placeholder="Search models..." oninput="calculate()">
                 <select id="sortOrder" class="btn" onchange="calculate()">
                     <option value="desc">Price: High to Low</option>
                     <option value="asc">Price: Low to High</option>
@@ -134,7 +112,7 @@
             </div>
             <div class="table-wrap">
                 <table>
-                    <thead><tr><th>Model</th><th class="num">In</th><th class="num">Out</th><th class="num">Total</th></tr></thead>
+                    <thead><tr><th>Model / Context Window</th><th class="num">In</th><th class="num">Out</th><th class="num">Total</th></tr></thead>
                     <tbody id="table-body"></tbody>
                 </table>
             </div>
@@ -164,17 +142,17 @@
 
     function getBackupModels() {
         return [
-            {name:"GPT-5.2 Pro", input:6.8, output:55, limit:128000},
-            {name:"Claude 4.5 Opus", input:2.3, output:8, limit:200000},
-            {name:"Gemini 3 Pro", input:0.7, output:4.5, limit:2000000}
+            {name:"GPT-4o (Standard)", input:5, output:15, limit:128000},
+            {name:"Claude 3.5 Sonnet", input:3, output:15, limit:200000},
+            {name:"GPT-4o mini", input:0.15, output:0.6, limit:128000}
         ];
     }
 
-    function handleManualInput() {
-        // Reset optimized view when user types something new
+    // Banner Reset Logic
+    function handleManualInput() { hideBanner(); calculate(); }
+    function hideBanner() {
         document.getElementById('compare-banner').style.display = 'none';
         lastOriginalText = "";
-        calculate();
     }
 
     function calculate() {
@@ -206,11 +184,7 @@
         let html = ''; let peak = 0;
         data.forEach(m => {
             if (m.total > peak) peak = m.total;
-            const inPct = Math.min((inC / m.limit) * 100, 100);
-            const outPct = Math.min((outC / m.limit) * 100, 100 - inPct);
-
-            html += `<tr><td><b>${m.name}</b><br><small>Limit: ${m.limit/1000}K</small>
-                <div class="ctx-bar-bg"><div class="ctx-bar-in" style="width:${inPct}%"></div><div class="ctx-bar-out" style="width:${outPct}%"></div></div></td>
+            html += `<tr><td><b>${m.name}</b><br><small>Limit: ${m.limit/1000}K</small></td>
                 <td class="num">${sym}${m.cIn.toFixed(4)}</td><td class="num">${sym}${m.cOut.toFixed(4)}</td>
                 <td class="num" style="color:var(--brand); font-weight:700;">${sym}${m.total.toFixed(2)}</td></tr>`;
         });
@@ -223,7 +197,7 @@
 
     function renderViz(tokens) {
         const viz = document.getElementById('viz');
-        viz.innerHTML = tokens.length ? '' : '<small style="color:var(--text-muted)">Token visualization...</small>';
+        viz.innerHTML = tokens.length ? '' : '<small style="color:var(--text-muted)">Token visualization (with Indexing) will appear here...</small>';
         tokens.slice(0, 50).forEach((t, i) => {
             const g = document.createElement('div'); g.className = 'token-group';
             g.innerHTML = `<span class="token-idx">${i+1}</span><span class="token-span" style="background:var(--t${(i%4)+1})">${GPTTokenizer_cl100k_base.decode([t])}</span>`;
@@ -235,7 +209,6 @@
         const input = document.getElementById('input');
         if(!input.value) return;
         const currentText = input.value;
-        // Logic to remove fluff words
         const optimized = currentText.replace(/\b(Please|Actually|Very|I would like you to|Can you|I want you to|In order to)\b/gi, '').replace(/\s+/g, ' ').trim();
         
         if (optimized === currentText) return;
@@ -252,30 +225,22 @@
     }
 
     function jokeExample() {
-        // RESET FIX: Hide the banner and reset cached text when clicking Example
-        document.getElementById('compare-banner').style.display = 'none';
-        lastOriginalText = ""; 
-        
+        hideBanner(); // Ensures old optimized text views clear on new example
         document.getElementById('input').value = examplePrompts[exIdx];
         exIdx = (exIdx + 1) % examplePrompts.length;
-        
-        // Optimize the fresh example
-        optimizePrompt();
+        calculate();
     }
 
-    function showAnalysis() {
-        const words = document.getElementById('input').value.toLowerCase().match(/\b\w+\b/g) || [];
-        const counts = {};
-        words.forEach(w => counts[w] = (counts[w] || 0) + GPTTokenizer_cl100k_base.encode(w).length);
-        const sorted = Object.entries(counts).sort((a,b) => b[1] - a[1]).slice(0, 5);
-        document.getElementById('analysis-results').innerHTML = sorted.map(([w, c]) => `<div style="display:flex; justify-content:space-between; padding:5px 0; border-bottom:1px solid var(--border);"><span>"${w}"</span><b>${c} tokens</b></div>`).join('') || 'No words.';
-        document.getElementById('analysis-modal').style.display = 'flex';
-    }
-
-    function closeAnalysis() { document.getElementById('analysis-modal').style.display = 'none'; }
-    function clearEditor() { document.getElementById('input').value = ''; document.getElementById('compare-banner').style.display = 'none'; lastOriginalText = ''; calculate(); }
-    function undoOptimize() { if(lastOriginalText) { document.getElementById('input').value = lastOriginalText; document.getElementById('compare-banner').style.display = 'none'; lastOriginalText = ''; calculate(); } }
+    function clearEditor() { document.getElementById('input').value = ''; hideBanner(); calculate(); }
     
+    function undoOptimize() {
+        if(lastOriginalText) {
+            document.getElementById('input').value = lastOriginalText;
+            hideBanner();
+            calculate();
+        }
+    }
+
     function saveToHistory() {
         const txt = document.getElementById('input').value; if(!txt) return;
         const h = JSON.parse(localStorage.getItem('h') || '[]');
@@ -286,7 +251,7 @@
     
     function renderHistory() {
         const h = JSON.parse(localStorage.getItem('h') || '[]');
-        document.getElementById('history-list').innerHTML = h.map(i => `<div style="padding:8px; border-bottom:1px solid var(--border); cursor:pointer;" onclick="document.getElementById('input').value='${i.t.replace(/'/g, "\\'")}';handleManualInput();"><b>${i.d}</b>: ${i.t.substring(0,20)}...</div>`).join('') || 'No history';
+        document.getElementById('history-list').innerHTML = h.map(i => `<div style="padding:8px; border-bottom:1px solid var(--border); cursor:pointer;" onclick="document.getElementById('input').value='${i.t.replace(/'/g, "\\'")}';calculate();"><b>${i.d}</b>: ${i.t.substring(0,20)}...</div>`).join('') || 'No history';
     }
     
     function clearHistory() { localStorage.removeItem('h'); renderHistory(); }
