@@ -48,6 +48,7 @@
 <aside>
     <h3 style="color:var(--brand); margin-bottom:20px;">Token Calculator</h3>
     <div id="history-list" style="flex:1; overflow-y:auto; font-size:11px;"></div>
+    <button class="btn" style="background:var(--brand); color:white; border:none; margin-bottom:8px;" onclick="downloadData()">📥 Download JSON</button>
     <button class="btn" style="background:var(--success); color:white; border:none; margin-bottom:8px;" onclick="saveToHistory()">💾 Save Text</button>
     <button class="btn" onclick="clearHistory()">🗑 Clear</button>
 </aside>
@@ -96,7 +97,7 @@
 
         <div class="glass-card">
             <div style="display:flex; justify-content:space-between; margin-bottom:10px; gap: 8px; flex-wrap: wrap;">
-                <input type="text" id="modelSearch" class="btn" style="flex:1" placeholder="Filter models by name or strategy..." oninput="calculate()">
+                <input type="text" id="modelSearch" class="btn" style="flex:1" placeholder="Filter models..." oninput="calculate()">
                 <select id="sortOrder" class="btn" onchange="calculate()">
                     <option value="desc">Price: High to Low</option>
                     <option value="asc">Price: Low to High</option>
@@ -108,7 +109,7 @@
             </div>
             <div class="table-wrap">
                 <table>
-                    <thead><tr><th>Model & Strategy</th><th class="num">In</th><th class="num">Out</th><th class="num">Total</th></tr></thead>
+                    <thead><tr><th>Model & Strategy</th><th class="num">In Cost</th><th class="num">Out Cost</th><th class="num">Total</th></tr></thead>
                     <tbody id="table-body"></tbody>
                 </table>
             </div>
@@ -119,6 +120,7 @@
 <script src="https://unpkg.com/gpt-tokenizer/dist/cl100k_base.js"></script>
 <script>
     let lastOriginalText = "";
+    let models = []; 
     const examplePrompts = [
         "Please write a very long report about why cats are actually secretly in charge of the world.",
         "Can you actually explain in order to help me understand very clearly why the moon appears white?",
@@ -126,29 +128,17 @@
     ];
     let exIdx = 0;
 
-    // The Top 20 Models of 2026
-    const models = [
-        { "name": "GPT-5.2 Pro", "input": 15.00, "output": 120.00, "limit": 128000, "why": "Deep logic/math benchmark king." },
-        { "name": "GPT-5 (Flagship)", "input": 1.25, "output": 10.00, "limit": 128000, "why": "Best human-like creativity & chat." },
-        { "name": "o3-pro (Thinking)", "input": 20.00, "output": 80.00, "limit": 200000, "why": "Scientific research & extreme planning." },
-        { "name": "Claude 4.5 Opus", "input": 5.00, "output": 25.00, "limit": 200000, "why": "State-of-the-art coding & documentation." },
-        { "name": "Claude 4.5 Sonnet", "input": 3.00, "output": 15.00, "limit": 200000, "why": "Autonomous agents & UI automation." },
-        { "name": "Gemini 3 Pro", "input": 1.25, "output": 10.00, "limit": 2000000, "why": "Massive context & native video/audio." },
-        { "name": "Gemini 3 Flash", "input": 0.10, "output": 0.40, "limit": 1000000, "why": "Ultra-fast response for mobile apps." },
-        { "name": "DeepSeek-V3.2", "input": 0.28, "output": 0.42, "limit": 131000, "why": "Unbeatable value for performance." },
-        { "name": "Llama 4 Maverick", "input": 0.20, "output": 0.20, "limit": 128000, "why": "Top choice for secure local hosting." },
-        { "name": "Grok 4.1", "input": 3.00, "output": 15.00, "limit": 128000, "why": "Real-time X.com data & social trends." },
-        { "name": "Mistral Large 3", "input": 2.00, "output": 6.00, "limit": 128000, "why": "Multilingual mastery (European focus)." },
-        { "name": "Perplexity Sonar Pro", "input": 1.00, "output": 1.00, "limit": 32000, "why": "Best for web-grounded research." },
-        { "name": "GPT-4o mini", "input": 0.15, "output": 0.60, "limit": 128000, "why": "Efficient for small repetitive tasks." },
-        { "name": "Claude 3.5 Haiku", "input": 0.25, "output": 1.25, "limit": 200000, "why": "Fastest coding refactors." },
-        { "name": "Cohere Command R+", "input": 3.00, "output": 15.00, "limit": 128000, "why": "Optimized for Enterprise RAG/search." },
-        { "name": "Qwen 3 Coder", "input": 0.30, "output": 0.60, "limit": 32000, "why": "Specialized for Python/C++ automation." },
-        { "name": "o1-mini", "input": 3.00, "output": 12.00, "limit": 128000, "why": "Legacy reasoning for coders." },
-        { "name": "Mistral Small 2", "input": 0.20, "output": 0.60, "limit": 32000, "why": "Mathematical reasoning on a budget." },
-        { "name": "DeepSeek Coder V2", "input": 0.14, "output": 0.28, "limit": 128000, "why": "Cheapest coding assistant available." },
-        { "name": "Gemini 2.5 Flash-Lite", "input": 0.05, "output": 0.10, "limit": 1000000, "why": "Bare-minimum cost for huge context." }
-    ];
+    // Fetch models from models.json
+    fetch('models.json')
+        .then(res => res.json())
+        .then(data => {
+            models = data;
+            calculate();
+        })
+        .catch(err => {
+            console.error("Error loading models:", err);
+            document.getElementById('table-body').innerHTML = `<tr><td colspan="4" style="text-align:center; color:red;">Failed to load models.json</td></tr>`;
+        });
 
     function handleManualInput() { hideBanner(); calculate(); }
     function hideBanner() { document.getElementById('compare-banner').style.display = 'none'; lastOriginalText = ""; }
@@ -172,9 +162,10 @@
         let filtered = models.filter(m => 
             m.name.toLowerCase().includes(search) || m.why.toLowerCase().includes(search)
         ).map(m => {
-            const costIn = (inC / 1000000) * m.input;
-            const costOut = (outC / 1000000) * m.output;
-            const total = (costIn + costOut) * rate;
+            // APPLY RATE TO EVERYTHING INDIVIDUALLY FOR UI ACCURACY
+            const costIn = (inC / 1000000) * m.input * rate;
+            const costOut = (outC / 1000000) * m.output * rate;
+            const total = costIn + costOut;
             return { ...m, costIn, costOut, total };
         });
 
@@ -196,6 +187,45 @@
         document.getElementById('total-cost-head').innerText = sym + peak.toFixed(2);
         document.getElementById('peak-val').innerText = sym + peak.toFixed(2);
         renderViz(tokens);
+    }
+
+    function downloadData() {
+        const text = document.getElementById('input').value;
+        if(!text) return alert("Please enter some text first.");
+        
+        const table = document.getElementById('table-body');
+        const rows = Array.from(table.querySelectorAll('tr'));
+        const modelData = rows.map(row => {
+            const cols = row.querySelectorAll('td');
+            return {
+                model: cols[0].querySelector('b').innerText,
+                strategy: cols[0].querySelector('.why-tag').innerText.replace('💡 ', ''),
+                costIn: cols[1].innerText,
+                costOut: cols[2].innerText,
+                totalCost: cols[3].innerText
+            };
+        });
+
+        const exportObj = {
+            metadata: { 
+                timestamp: new Date().toISOString(), 
+                input_tokens: document.getElementById('in-count').innerText, 
+                estimated_output: document.getElementById('out-count').innerText, 
+                currency: document.getElementById('curr').value 
+            },
+            prompt_content: text,
+            analysis: modelData
+        };
+
+        const now = new Date();
+        const fileName = `token-analysis-${now.toISOString().replace(/[:T]/g, '-').slice(0, 19)}.json`;
+        const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(exportObj, null, 2));
+        const downloadAnchorNode = document.createElement('a');
+        downloadAnchorNode.setAttribute("href", dataStr);
+        downloadAnchorNode.setAttribute("download", fileName);
+        document.body.appendChild(downloadAnchorNode);
+        downloadAnchorNode.click();
+        downloadAnchorNode.remove();
     }
 
     function renderViz(tokens) {
@@ -235,14 +265,14 @@
         localStorage.setItem('h', JSON.stringify(h.slice(0,10)));
         renderHistory();
     }
+    
     function renderHistory() {
         const h = JSON.parse(localStorage.getItem('h') || '[]');
         document.getElementById('history-list').innerHTML = h.map(i => `<div style="padding:8px; border-bottom:1px solid var(--border); cursor:pointer;" onclick="document.getElementById('input').value='${i.t.replace(/'/g, "\\'")}';calculate();"><b>${i.d}</b>: ${i.t.substring(0,20)}...</div>`).join('') || 'No history';
     }
+    
     function clearHistory() { localStorage.removeItem('h'); renderHistory(); }
     
-    // Auto-calculate on load
-    calculate();
     renderHistory();
 </script>
 </body>
