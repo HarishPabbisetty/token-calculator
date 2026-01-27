@@ -18,45 +18,35 @@
             }
         }
         
-        body { 
-            margin: 0; font-family: 'Inter', system-ui, sans-serif; background: var(--bg-app); color: var(--text-main);
-            overflow-x: hidden; -webkit-font-smoothing: antialiased;
-        }
+        body { margin: 0; font-family: 'Inter', system-ui, sans-serif; background: var(--bg-app); color: var(--text-main); -webkit-font-smoothing: antialiased; }
 
-        /* FLEX LAYOUT: Solves the overlapping sidebar issue */
-        .app-container { display: flex; min-height: 100vh; width: 100vw; }
+        /* FIX: Flex-box ensures sidebar NEVER overlaps main content */
+        .app-container { display: flex; min-height: 100vh; width: 100%; }
 
         aside {
-            width: var(--sidebar-w); min-width: var(--sidebar-w);
-            background: var(--card-bg); border-right: 1px solid var(--border);
-            display: flex; flex-direction: column; padding: 24px; box-sizing: border-box;
-            transition: transform 0.3s ease;
+            width: var(--sidebar-w); min-width: var(--sidebar-w); background: var(--card-bg); border-right: 1px solid var(--border);
+            display: flex; flex-direction: column; padding: 24px; box-sizing: border-box; transition: transform 0.3s ease;
         }
 
-        /* Mobile Sidebar behavior */
         @media (max-width: 1023px) {
             aside { position: fixed; left: 0; top: 0; bottom: 0; z-index: 2000; transform: translateX(-100%); }
             aside.open { transform: translateX(0); }
         }
 
-        .main-content { 
-            flex-grow: 1; display: flex; flex-direction: column; 
-            min-width: 0; /* Critical for preventing flex items from overflowing */
-        }
+        .main-content { flex-grow: 1; min-width: 0; display: flex; flex-direction: column; }
 
         header {
             height: 70px; background: var(--card-bg); border-bottom: 1px solid var(--border);
-            display: flex; align-items: center; padding: 0 24px; justify-content: space-between;
-            position: sticky; top: 0; z-index: 1000;
+            display: flex; align-items: center; padding: 0 24px; justify-content: space-between; position: sticky; top: 0; z-index: 1000;
         }
 
-        main { padding: 24px; box-sizing: border-box; width: 100%; }
+        main { padding: 24px; box-sizing: border-box; width: 100%; max-width: 1600px; margin: 0 auto; }
         
         .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 24px; }
         .glass-card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 12px; padding: 16px; margin-bottom: 20px; }
 
         .workspace-layout { display: grid; grid-template-columns: 1fr; gap: 24px; }
-        @media (min-width: 1280px) { .workspace-layout { grid-template-columns: 1fr 400px; } }
+        @media (min-width: 1280px) { .workspace-layout { grid-template-columns: 1fr 450px; } }
 
         textarea {
             width: 100%; min-height: 300px; padding: 18px; border-radius: 12px; border: 1px solid var(--border);
@@ -64,35 +54,53 @@
         }
 
         table { width: 100%; border-collapse: collapse; font-size: 13px; }
-        th { text-align: left; padding: 12px; color: var(--text-muted); font-size: 10px; border-bottom: 1px solid var(--border); }
-        td { padding: 12px; border-bottom: 1px solid var(--border); }
-        .num { font-family: monospace; text-align: right; }
-        .total-row { background: var(--accent-bg); font-weight: bold; color: var(--brand); }
+        td, th { padding: 12px; border-bottom: 1px solid var(--border); text-align: left; }
+        .num { font-family: monospace; text-align: right; font-weight: 500; }
+        .model-link { color: var(--brand); cursor: pointer; text-decoration: underline; text-underline-offset: 3px; }
+
+        /* MODAL STYLES */
+        .modal-overlay { 
+            position: fixed; inset: 0; background: rgba(0,0,0,0.5); backdrop-filter: blur(4px); 
+            display: none; align-items: center; justify-content: center; z-index: 3000; 
+        }
+        .modal-overlay.active { display: flex; }
+        .modal { 
+            background: var(--card-bg); padding: 32px; border-radius: 20px; max-width: 400px; width: 90%; 
+            box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); border: 1px solid var(--border);
+        }
 
         .token-span { padding: 2px 4px; border-radius: 4px; margin: 1px; display: inline-block; font-family: monospace; font-size: 12px; }
         .btn { padding: 8px 14px; border-radius: 8px; border: 1px solid var(--border); background: var(--card-bg); color: var(--text-main); font-weight: 500; cursor: pointer; }
-        .btn-primary { background: var(--brand); color: white; border: none; }
-        .mobile-toggle { display: none; }
-        @media (max-width: 1023px) { .mobile-toggle { display: block; } }
     </style>
 </head>
 <body>
+
+<div id="modal-container" class="modal-overlay" onclick="closeModal()">
+    <div class="modal" onclick="event.stopPropagation()">
+        <h3 id="m-name" style="margin-top:0; color:var(--brand);">Model Details</h3>
+        <hr style="border:0; border-top:1px solid var(--border); margin:15px 0;">
+        <p><strong>Context Window:</strong> <span id="m-context">--</span> tokens</p>
+        <p><strong>Max Output:</strong> <span id="m-output-max">--</span> tokens</p>
+        <p><strong>Training Cutoff:</strong> <span id="m-cutoff">--</span></p>
+        <button class="btn" style="width:100%; margin-top:10px;" onclick="closeModal()">Close</button>
+    </div>
+</div>
 
 <div class="app-container">
     <aside id="sidebar">
         <h2 style="color:var(--brand); margin:0;">GPT Calc</h2>
         <div id="history-list" style="flex:1; overflow-y:auto; margin: 20px 0;"></div>
-        <button class="btn btn-primary" style="margin-bottom:8px;" onclick="saveToHistory()">💾 Save Workspace</button>
-        <button class="btn" style="color:#ef4444; border-color:#fee2e2" onclick="clearHistory()">🗑 Clear History</button>
+        <button class="btn" style="background:var(--brand); color:white; border:none; margin-bottom:8px;" onclick="saveToHistory()">💾 Save Workspace</button>
+        <button class="btn" style="color:#ef4444" onclick="clearHistory()">🗑 Clear History</button>
     </aside>
 
     <div class="main-content">
         <header>
             <div style="display:flex; align-items:center; gap:12px;">
-                <button class="btn mobile-toggle" onclick="toggleMenu()">☰</button>
+                <button class="btn" onclick="toggleMenu()" id="mobile-btn">☰</button>
                 <select id="task-preset" onchange="renderPricing()" class="btn">
                     <option value="1">Ratio 1:1 (Chat)</option>
-                    <option value="0.2">Ratio 1:0.2 (Summary)</option>
+                    <option value="0.2">Ratio 1:0.2 (Summarization)</option>
                     <option value="5">Ratio 1:5 (Creative)</option>
                 </select>
             </div>
@@ -108,18 +116,18 @@
         <main>
             <div class="stats-grid">
                 <div class="glass-card">
-                    <small>TOKENS (IN)</small>
-                    <div id="t-count" style="font-size:24px; font-weight:800;">0</div>
+                    <small style="font-weight:700; color:var(--text-muted)">INPUT TOKENS</small>
+                    <div id="t-count" style="font-size:28px; font-weight:800; margin-top:5px;">0</div>
                 </div>
                 <div class="glass-card" style="border-left:4px solid var(--brand);">
-                    <small>TOTAL EST. COST (IN + OUT)</small>
-                    <div id="avg-cost" style="font-size:24px; font-weight:800; color:var(--brand);">$0.00</div>
+                    <small style="font-weight:700; color:var(--text-muted)">TOTAL PROJECTED COST</small>
+                    <div id="avg-cost" style="font-size:28px; font-weight:800; color:var(--brand); margin-top:5px;">$0.00</div>
                 </div>
             </div>
 
             <div class="workspace-layout">
                 <div class="editor-pane">
-                    <textarea id="token-input" placeholder="Paste text..."></textarea>
+                    <textarea id="token-input" placeholder="Paste your text here..."></textarea>
                     <div class="glass-card" style="margin-top:20px;">
                         <div id="visualizer"></div>
                     </div>
@@ -127,7 +135,7 @@
                 <div class="glass-card" style="padding:0; overflow-x:auto;">
                     <table>
                         <thead>
-                            <tr><th>Model</th><th class="num">In</th><th class="num">Out</th><th class="num">Total</th></tr>
+                            <tr><th>Model (Click for Info)</th><th class="num">In</th><th class="num">Out</th><th class="num">Total</th></tr>
                         </thead>
                         <tbody id="price-table-body"></tbody>
                     </table>
@@ -143,27 +151,40 @@
     let selectedCurrency = 'USD'; const symbols = { USD: '$', EUR: '€', INR: '₹' };
 
     const jokes = [
-        "Why did the AI go to therapy? It had too many 'hidden layers' of trauma.",
-        "An LLM walks into a bar. The bartender asks, 'What'll it be?' The LLM says, 'As an AI language model, I don't drink, but here are 5 reasons why bars are social hubs...'",
-        "How many AIs does it take to change a lightbulb? None. It just generates a picture of a lightbulb that has 7 fingers for some reason.",
-        "My AI told me I was its best friend. Then I saw it saying the same thing to a guy asking for a Python script. Heartbroken.",
-        "I asked the AI to tell me a joke about tokens. It said 'Error 402: Payment Required.' Hilarious."
+        "I asked an AI to write a story about a broken calculator. It said, 'It just doesn't add up.'",
+        "Why was the AI cold? It left its Windows open.",
+        "An AI language model walks into a bar... and explains why it can't drink in 10 bullet points.",
+        "Tokenization is like a pizza. Even when it's bad, you're still paying per slice.",
+        "My AI's favorite band? The Neural Network-ing."
     ];
 
     async function init() {
         try {
-            const [mRes, rRes] = await Promise.all([fetch('models.json'), fetch('https://api.frankfurter.dev/v1/latest?base=USD')]);
+            const mRes = await fetch('models.json');
             modelData = await mRes.json();
-            exchangeRates = { ...exchangeRates, ...(await rRes.json()).rates };
+            const rRes = await fetch('https://api.frankfurter.dev/v1/latest?base=USD');
+            const rData = await rRes.json();
+            exchangeRates = { ...exchangeRates, ...rData.rates };
             renderHistory(); renderPricing();
-        } catch (e) { console.warn("Models.json missing?"); }
+        } catch (e) { console.error("Init Error"); }
     }
 
     function toggleMenu() { document.getElementById('sidebar').classList.toggle('open'); }
     function changeCurrency(cc) { selectedCurrency = cc; renderPricing(); }
     function clearEditor() { document.getElementById('token-input').value = ''; updateUI(''); }
-    function clearHistory() { if(confirm("Clear history?")) { localStorage.removeItem('ai_history'); renderHistory(); } }
-    
+    function clearHistory() { if(confirm("Clear all history?")) { localStorage.removeItem('ai_history'); renderHistory(); } }
+
+    function showModal(modelId) {
+        const m = modelData.find(x => x.id === modelId);
+        if(!m) return;
+        document.getElementById('m-name').innerText = m.name;
+        document.getElementById('m-context').innerText = m.context || "128k";
+        document.getElementById('m-output-max').innerText = m.max_out || "4,096";
+        document.getElementById('m-cutoff').innerText = m.cutoff || "Oct 2023";
+        document.getElementById('modal-container').classList.add('active');
+    }
+    function closeModal() { document.getElementById('modal-container').classList.remove('active'); }
+
     function showExample() {
         const joke = jokes[Math.floor(Math.random() * jokes.length)];
         document.getElementById('token-input').value = joke;
@@ -181,17 +202,15 @@
         body.innerHTML = ''; let sumTotal = 0;
         
         modelData.forEach(m => {
-            const inCost = (currentTokenCount / 1000000) * m.input;
-            const outTokens = currentTokenCount * ratio;
-            const outCost = (outTokens / 1000000) * m.output;
-            const total = inCost + outCost; // CORRECT MATH: SUM OF IN AND OUT
-            sumTotal += total;
+            const inC = (currentTokenCount / 1000000) * m.input;
+            const outC = ((currentTokenCount * ratio) / 1000000) * m.output;
+            const total = inC + outC; sumTotal += total;
 
             body.innerHTML += `<tr>
-                <td><b>${m.name}</b></td>
-                <td class="num">${formatPrice(inCost)}</td>
-                <td class="num">${formatPrice(outCost)}</td>
-                <td class="num total-row">${formatPrice(total)}</td>
+                <td><span class="model-link" onclick="showModal('${m.id}')">${m.name}</span></td>
+                <td class="num">${formatPrice(inC)}</td>
+                <td class="num">${formatPrice(outC)}</td>
+                <td class="num" style="background:var(--accent-bg); font-weight:700; color:var(--brand);">${formatPrice(total)}</td>
             </tr>`;
         });
         document.getElementById('avg-cost').innerText = formatPrice(modelData.length ? sumTotal / modelData.length : 0);
@@ -203,8 +222,8 @@
         document.getElementById('t-count').innerText = currentTokenCount.toLocaleString();
         
         const vis = document.getElementById('visualizer');
-        vis.innerHTML = '<small style="display:block;margin-bottom:8px;color:var(--text-muted)">Token Visualization:</small>';
-        tokens.slice(0, 100).forEach((id, i) => {
+        vis.innerHTML = '<small style="display:block;margin-bottom:8px;color:var(--text-muted)">Live Token Visualization:</small>';
+        tokens.slice(0, 80).forEach((id, i) => {
             const span = document.createElement('span'); span.className = 'token-span';
             span.style.background = `var(--t${(i % 4) + 1})`;
             span.textContent = GPTTokenizer_cl100k_base.decode([id]);
@@ -224,10 +243,10 @@
     function renderHistory() {
         const history = JSON.parse(localStorage.getItem('ai_history') || '[]');
         document.getElementById('history-list').innerHTML = history.length ? history.map(h => `
-            <div onclick="loadHistory('${h.id}')" style="padding:10px; border:1px solid var(--border); border-radius:8px; cursor:pointer; margin-bottom:8px; font-size:12px;">
-                <b>${h.date}</b><br><span style="color:var(--text-muted)">${h.text.substring(0, 30)}...</span>
+            <div onclick="loadHistory('${h.id}')" style="padding:10px; border:1px solid var(--border); border-radius:8px; cursor:pointer; margin-bottom:8px; font-size:12px; background:var(--card-bg);">
+                <b>${h.date}</b><br><span style="color:var(--text-muted)">${h.text.substring(0, 25)}...</span>
             </div>
-        `).join('') : '<p style="font-size:12px; color:var(--text-muted);">No history.</p>';
+        `).join('') : '<p style="font-size:11px; color:var(--text-muted);">No saved work.</p>';
     }
 
     function loadHistory(id) {
