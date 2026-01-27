@@ -1,11 +1,13 @@
 [
-  { "name": "GPT-4o", "input": 2.50, "output": 10.00 },
-  { "name": "o1-preview", "input": 15.00, "output": 60.00 },
-  { "name": "GPT-4o mini", "input": 0.15, "output": 0.60 },
-  { "name": "Claude 3.5 Sonnet", "input": 3.00, "output": 15.00 },
-  { "name": "Claude 3.5 Haiku", "input": 0.25, "output": 1.25 },
-  { "name": "Gemini 1.5 Pro", "input": 1.25, "output": 5.00 },
-  { "name": "Gemini 1.5 Flash", "input": 0.075, "output": 0.30 },
-  { "name": "DeepSeek-V3", "input": 0.14, "output": 0.28 },
-  { "name": "Llama 3.1 405B", "input": 2.00, "output": 6.00 }
+  { "name": "GPT-5 (Flagship)", "input": 1.25, "output": 10.00 },
+  { "name": "GPT-5 mini", "input": 0.25, "output": 2.00 },
+  { "name": "o3 (Reasoning)", "input": 2.00, "output": 8.00 },
+  { "name": "Claude 4.5 Opus", "input": 5.00, "output": 25.00 },
+  { "name": "Claude 4 Sonnet", "input": 3.00, "output": 15.00 },
+  { "name": "Claude 4 Haiku", "input": 1.00, "output": 5.00 },
+  { "name": "Gemini 2.5 Pro", "input": 1.25, "output": 10.00 },
+  { "name": "Gemini 2.5 Flash", "input": 0.15, "output": 0.60 },
+  { "name": "DeepSeek-V3", "input": 0.28, "output": 0.42 },
+  { "name": "Llama 3.3 70B", "input": 0.80, "output": 0.80 },
+  { "name": "Grok 3 (Standard)", "input": 3.00, "output": 15.00 }
 ]
