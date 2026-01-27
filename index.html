@@ -6,7 +6,7 @@
     <title>GPT Token Cost Calculator</title>
     <style>
         :root {
-            --sidebar-w: 220px; /* SHRUNKEN SIDEBAR */
+            --sidebar-w: 220px; 
             --brand: #2563eb; --bg-app: #f8fafc;
             --card-bg: #ffffff; --text-main: #1e293b; --text-muted: #64748b;
             --border: #e2e8f0; --accent-bg: #f0f7ff;
@@ -19,60 +19,47 @@
             }
         }
         
-        body { margin: 0; font-family: 'Inter', system-ui, sans-serif; background: var(--bg-app); color: var(--text-main); }
-
-        /* THE FIX: Flex container ensures sidebar and main are siblings, not overlapping */
+        body { margin: 0; font-family: 'Inter', system-ui, sans-serif; background: var(--bg-app); color: var(--text-main); -webkit-font-smoothing: antialiased; }
         .app-container { display: flex; min-height: 100vh; width: 100%; overflow-x: hidden; }
 
+        /* Sidebar */
         aside {
-            width: var(--sidebar-w); min-width: var(--sidebar-w); /* Fixed width "Wall" */
+            width: var(--sidebar-w); min-width: var(--sidebar-w);
             background: var(--card-bg); border-right: 1px solid var(--border);
             display: flex; flex-direction: column; padding: 16px; box-sizing: border-box;
             height: 100vh; position: sticky; top: 0;
         }
-
         @media (max-width: 1023px) {
-            aside { position: fixed; left: 0; top: 0; bottom: 0; z-index: 2000; transform: translateX(-100%); }
+            aside { position: fixed; left: 0; top: 0; bottom: 0; z-index: 2000; transform: translateX(-100%); transition: 0.3s; }
             aside.open { transform: translateX(0); }
         }
 
-        .main-content { 
-            flex: 1; min-width: 0; /* Allows main to shrink without pushing sidebar */
-            display: flex; flex-direction: column; 
-        }
-
-        header {
-            height: 60px; background: var(--card-bg); border-bottom: 1px solid var(--border);
-            display: flex; align-items: center; padding: 0 20px; justify-content: space-between;
-        }
-
+        .main-content { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+        header { height: 60px; background: var(--card-bg); border-bottom: 1px solid var(--border); display: flex; align-items: center; padding: 0 20px; justify-content: space-between; }
         main { padding: 20px; box-sizing: border-box; width: 100%; }
         
-        /* Stats & Layout */
+        /* Layout & Cards */
         .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin-bottom: 20px; }
         .glass-card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 10px; padding: 16px; }
 
         .workspace-layout { display: grid; grid-template-columns: 1fr; gap: 20px; }
-        @media (min-width: 1200px) { .workspace-layout { grid-template-columns: 1fr 380px; } }
+        @media (min-width: 1200px) { .workspace-layout { grid-template-columns: 4fr 6fr; } }
 
-        textarea {
-            width: 100%; min-height: 250px; padding: 15px; border-radius: 10px; border: 1px solid var(--border);
-            background: var(--bg-app); color: var(--text-main); font-size: 15px; resize: vertical; box-sizing: border-box;
-        }
+        textarea { width: 100%; min-height: 200px; padding: 15px; border-radius: 10px; border: 1px solid var(--border); background: var(--bg-app); color: var(--text-main); font-size: 15px; resize: vertical; box-sizing: border-box; }
 
-        /* Table Styles */
-        table { width: 100%; border-collapse: collapse; font-size: 12px; }
-        th { text-align: left; padding: 10px; color: var(--text-muted); border-bottom: 1px solid var(--border); }
-        td { padding: 10px; border-bottom: 1px solid var(--border); }
-        .num { font-family: monospace; text-align: right; }
-        .model-name { color: var(--brand); cursor: pointer; text-decoration: underline; }
+        /* Bigger Table */
+        table { width: 100%; border-collapse: collapse; font-size: 14px; }
+        th { text-align: left; padding: 15px; color: var(--text-muted); border-bottom: 2px solid var(--border); }
+        td { padding: 15px; border-bottom: 1px solid var(--border); }
+        .num { font-family: monospace; text-align: right; font-weight: 500; }
+        .model-name { color: var(--brand); cursor: pointer; font-weight: 600; text-decoration: underline; }
 
         /* Modal */
         .modal-bg { position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: none; align-items: center; justify-content: center; z-index: 3000; }
         .modal-bg.active { display: flex; }
-        .modal { background: var(--card-bg); padding: 24px; border-radius: 12px; width: 320px; border: 1px solid var(--border); }
+        .modal { background: var(--card-bg); padding: 24px; border-radius: 12px; width: 350px; border: 1px solid var(--border); }
 
-        .btn { padding: 6px 12px; border-radius: 6px; border: 1px solid var(--border); background: var(--card-bg); cursor: pointer; font-size: 13px; }
+        .btn { padding: 8px 14px; border-radius: 8px; border: 1px solid var(--border); background: var(--card-bg); cursor: pointer; font-size: 13px; font-weight: 500; }
         .token-span { padding: 2px 4px; border-radius: 4px; margin: 1px; display: inline-block; font-family: monospace; font-size: 11px; }
     </style>
 </head>
@@ -81,22 +68,22 @@
 <div id="info-modal" class="modal-bg" onclick="this.classList.remove('active')">
     <div class="modal" onclick="event.stopPropagation()">
         <h3 id="m-title" style="margin:0 0 10px 0;">Model Info</h3>
-        <p id="m-desc" style="font-size:13px; color:var(--text-muted);"></p>
-        <button class="btn" style="width:100%" onclick="document.getElementById('info-modal').classList.remove('active')">Close</button>
+        <p id="m-desc" style="font-size:14px; color:var(--text-muted); line-height:1.5;"></p>
+        <button class="btn" style="width:100%; background:var(--brand); color:white; border:none;" onclick="document.getElementById('info-modal').classList.remove('active')">Close</button>
     </div>
 </div>
 
 <div class="app-container">
     <aside id="sidebar">
-        <h3 style="margin:0 0 15px 0;">GPT Token Cost</h3>
+        <h3 style="margin:0 0 15px 0; color:var(--brand);">GPT Calc</h3>
         <div id="history-list" style="flex:1; overflow-y:auto; font-size:11px;"></div>
-        <button class="btn" style="background:var(--brand); color:white; border:none; margin-bottom:5px;" onclick="saveToHistory()">Save</button>
-        <button class="btn" style="color:red" onclick="clearHistory()">Clear All</button>
+        <button class="btn" style="background:var(--brand); color:white; border:none; margin-bottom:8px;" onclick="saveToHistory()">💾 Save</button>
+        <button class="btn" style="color:#ef4444; border-color:#fee2e2" onclick="clearHistory()">🗑 Clear History</button>
     </aside>
 
     <div class="main-content">
         <header>
-            <div style="display:flex; gap:10px;">
+            <div style="display:flex; gap:10px; align-items:center;">
                 <button class="btn" onclick="document.getElementById('sidebar').classList.toggle('open')">☰</button>
                 <select id="ratio" onchange="calculate()" class="btn">
                     <option value="1">1:1 Chat</option>
@@ -106,6 +93,7 @@
             </div>
             <div style="display:flex; gap:10px;">
                 <button class="btn" onclick="jokeExample()">🎭 Humor</button>
+                <button class="btn" onclick="clearEditor()" style="color:#ef4444">Clear Editor</button>
                 <select id="curr" onchange="calculate()" class="btn">
                     <option value="USD">$ USD</option><option value="EUR">€ EUR</option>
                 </select>
@@ -114,18 +102,20 @@
 
         <main>
             <div class="stats-grid">
-                <div class="glass-card"><small>TOKENS IN</small><div id="in-count" style="font-size:22px; font-weight:700;">0</div></div>
-                <div class="glass-card"><small>SUM (IN+OUT)</small><div id="total-cost" style="font-size:22px; font-weight:700; color:var(--brand);">$0.00</div></div>
+                <div class="glass-card"><small style="font-weight:700;">TOKENS IN</small><div id="in-count" style="font-size:24px; font-weight:800; margin-top:5px;">0</div></div>
+                <div class="glass-card" style="border-left: 4px solid var(--brand);"><small style="font-weight:700;">TOTAL COST</small><div id="total-cost" style="font-size:24px; font-weight:800; color:var(--brand); margin-top:5px;">$0.00</div></div>
             </div>
 
             <div class="workspace-layout">
                 <div>
                     <textarea id="input" placeholder="Paste text here..." oninput="calculate()"></textarea>
-                    <div id="viz" class="glass-card" style="margin-top:15px; min-height:50px;"></div>
+                    <div id="viz" class="glass-card" style="margin-top:15px; min-height:80px;"></div>
                 </div>
-                <div class="glass-card" style="padding:0; overflow:hidden;">
+                <div class="glass-card" style="padding:0; overflow-x:auto;">
                     <table>
-                        <thead><tr><th>Model</th><th class="num">In</th><th class="num">Out</th><th class="num">Total</th></tr></thead>
+                        <thead style="background:var(--bg-app)">
+                            <tr><th>Model</th><th class="num">In</th><th class="num">Out</th><th class="num">Total</th></tr>
+                        </thead>
                         <tbody id="table-body"></tbody>
                     </table>
                 </div>
@@ -136,20 +126,35 @@
 
 <script src="https://unpkg.com/gpt-tokenizer/dist/cl100k_base.js"></script>
 <script>
-    let models = [
-        {id: "gpt4o", name: "GPT-4o", in: 5, out: 15, info: "128k context. Flagship high-intelligence model."},
-        {id: "gpt4o-mini", name: "GPT-4o Mini", in: 0.15, out: 0.60, info: "128k context. Affordable and fast for simple tasks."},
-        {id: "claude3.5", name: "Claude 3.5 Sonnet", in: 3, out: 15, info: "200k context. Industry leader in coding and reasoning."}
-    ];
+    let models = []; // Now populated by models.json
 
     const jokes = [
-        "Why did the AI get fired? It had a 'neural' breakdown.",
-        "An AI walks into a bar. Bartender says, 'We don't serve your kind.' AI says, 'That's okay, I'll just hallucinate a drink.'",
-        "How many AIs does it take to change a lightbulb? One to generate the light and 1,000 to discuss the alignment risks."
+        "Why did the AI go to the party? Because it heard they were serving 'chips'.",
+        "How do you stop an AI from charging? You take away its credit card.",
+        "My AI's favorite band? The Neural Network-ing."
     ];
+
+    async function init() {
+        try {
+            const response = await fetch('models.json');
+            models = await response.json();
+            renderHistory();
+            calculate();
+        } catch (e) {
+            console.error("Error loading models.json. Make sure the file exists in the same folder.");
+            // Fallback for testing
+            models = [{id: "error", name: "Error Loading Models", in: 0, out: 0, info: "Check console."}];
+            calculate();
+        }
+    }
 
     function jokeExample() {
         document.getElementById('input').value = jokes[Math.floor(Math.random() * jokes.length)];
+        calculate();
+    }
+
+    function clearEditor() {
+        document.getElementById('input').value = '';
         calculate();
     }
 
@@ -163,26 +168,25 @@
         
         let html = ''; let totalSum = 0;
         models.forEach(m => {
-            const costIn = (count / 1000000) * m.in;
-            const costOut = ((count * ratio) / 1000000) * m.out;
-            const total = costIn + costOut; // SUM OF IN AND OUT
+            const costIn = (count / 1000000) * m.input; // Ensure your JSON uses "input"
+            const costOut = ((count * ratio) / 1000000) * m.output; // Ensure your JSON uses "output"
+            const total = costIn + costOut;
             totalSum += total;
             
             html += `<tr>
                 <td class="model-name" onclick="showInfo('${m.id}')">${m.name}</td>
                 <td class="num">$${costIn.toFixed(4)}</td>
                 <td class="num">$${costOut.toFixed(4)}</td>
-                <td class="num" style="font-weight:bold">$${total.toFixed(4)}</td>
+                <td class="num" style="font-weight:bold; color:var(--brand); background:var(--accent-bg)">$${total.toFixed(4)}</td>
             </tr>`;
         });
         
         document.getElementById('table-body').innerHTML = html;
-        document.getElementById('total-cost').innerText = '$' + (totalSum / models.length).toFixed(4);
+        document.getElementById('total-cost').innerText = '$' + (models.length ? (totalSum / models.length).toFixed(4) : "0.00");
         
-        // Visualizer
         const viz = document.getElementById('viz');
-        viz.innerHTML = '';
-        tokens.slice(0, 50).forEach((t, i) => {
+        viz.innerHTML = '<small style="display:block;margin-bottom:8px;color:var(--text-muted)">Token Visualization:</small>';
+        tokens.slice(0, 100).forEach((t, i) => {
             const s = document.createElement('span'); s.className = 'token-span';
             s.style.background = `var(--t${(i % 4) + 1})`;
             s.textContent = GPTTokenizer_cl100k_base.decode([t]);
@@ -192,8 +196,9 @@
 
     function showInfo(id) {
         const m = models.find(x => x.id === id);
+        if(!m) return;
         document.getElementById('m-title').innerText = m.name;
-        document.getElementById('m-desc').innerText = m.info;
+        document.getElementById('m-desc').innerText = m.info || "No details provided for this model.";
         document.getElementById('info-modal').classList.add('active');
     }
 
@@ -208,14 +213,21 @@
 
     function renderHistory() {
         const h = JSON.parse(localStorage.getItem('h') || '[]');
-        document.getElementById('history-list').innerHTML = h.map(i => `
-            <div style="padding:5px; border-bottom:1px solid var(--border); cursor:pointer" onclick="document.getElementById('input').value='${i.t.replace(/'/g, "\\'")}';calculate();">
-                <b>${i.d}</b>: ${i.t.substring(0,15)}...
+        document.getElementById('history-list').innerHTML = h.length ? h.map(i => `
+            <div style="padding:8px; border-bottom:1px solid var(--border); cursor:pointer; overflow:hidden; white-space:nowrap; text-overflow:ellipsis;" onclick="document.getElementById('input').value='${i.t.replace(/'/g, "\\'")}';calculate();">
+                <b>${i.d}</b>: ${i.t}
             </div>
-        `).join('');
+        `).join('') : '<p style="padding:10px; color:var(--text-muted)">No history saved.</p>';
     }
 
-    renderHistory();
+    function clearHistory() {
+        if(confirm("Wipe all saved work?")) {
+            localStorage.removeItem('h');
+            renderHistory();
+        }
+    }
+
+    init(); // Start the fetch process
 </script>
 </body>
 </html>
