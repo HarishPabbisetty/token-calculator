@@ -57,9 +57,12 @@ The MIT License is one of the most popular and "permissive" licenses in the worl
 * Commercial use is okay: Companies can use your Token Calculator in their paid products.
 * Must keep name: If someone copies your code, they have to keep your original copyright notice inside the file.
 
-## No Liability (The "As Is" part): This means if someone uses your calculator, makes a mistake, and loses money because of a token counting error, you cannot sue you. I am providing the tool "as is this is built for learning purposes."
+## Note:
+* No Liability (The "As Is" part): This means if someone uses your calculator, makes a mistake, and loses money because of a token counting error, you cannot sue you. I am providing the tool "as is this is built for learning purposes."
 
-Copyright (c) 2026 
+* Copyright (c) 2026 
 THE SOFTWARE IS PROVIDED **"AS IS"** , WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+# Used Gemini to build this project for learning.
 
 Optimizing the 2026 AI Economy, one token at a time.
