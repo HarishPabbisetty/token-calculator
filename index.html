@@ -4,8 +4,10 @@ title: AI Token Counter
 ---
 
 <style>
+  /* Force the content area to be wider and fix theme clashes */
   section { width: 100% !important; max-width: 850px !important; }
   
+  /* Stats Cards */
   .stats-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px; margin-bottom: 25px; }
   .stat-card { padding: 15px; border-radius: 12px; text-align: center; border: 1px solid #e1e4e8; }
   .tokens-bg { background-color: #f0f7ff; border-color: #dbeafe; }
@@ -15,24 +17,25 @@ title: AI Token Counter
   .stat-label { color: #586069; font-size: 11px; font-weight: bold; text-transform: uppercase; margin-bottom: 5px; }
   .stat-val { font-size: 32px; font-weight: 900; color: #24292e; }
   
+  /* Buttons */
   .control-bar { display: flex; gap: 10px; margin-bottom: 10px; justify-content: flex-end; }
   .action-btn { 
     background: white; border: 1px solid #d1d5da; padding: 6px 12px; 
     border-radius: 6px; font-size: 13px; cursor: pointer; font-weight: 500;
   }
-  .action-btn:hover { background: #f6f8fa; border-color: #1b1f23; }
   .btn-clear { color: #d73a49; border-color: #ea9a9a; }
   .btn-clear:hover { background: #ffeef0; }
 
   textarea#token-input {
     width: 100%; padding: 15px; border: 1px solid #d1d5da; border-radius: 8px;
-    font-size: 16px; line-height: 1.5; background-color: #fafbfc; min-height: 200px;
-    box-sizing: border-box; resize: vertical;
+    font-size: 16px; line-height: 1.5; background-color: #fafbfc; min-height: 180px;
+    box-sizing: border-box;
   }
 
+  /* Pricing Table */
   .price-header { display: flex; justify-content: space-between; align-items: center; margin-top: 30px; margin-bottom: 10px; }
   .toggle-container { background: #f1f8ff; padding: 4px; border-radius: 20px; border: 1px solid #c8e1ff; display: flex; }
-  .toggle-btn { border: none; padding: 5px 15px; border-radius: 16px; cursor: pointer; font-size: 12px; font-weight: bold; background: transparent; transition: 0.2s; }
+  .toggle-btn { border: none; padding: 5px 15px; border-radius: 16px; cursor: pointer; font-size: 12px; font-weight: bold; background: transparent; }
   .toggle-btn.active { background: #0366d6; color: white; }
 
   .price-container { border: 1px solid #e1e4e8; border-radius: 8px; overflow: hidden; background: white; }
@@ -41,14 +44,34 @@ title: AI Token Counter
   td { padding: 10px 15px; border-bottom: 1px solid #f1f1f1; }
   .cost-val { font-family: monospace; font-weight: bold; color: #28a745; text-align: right; }
 
+  /* THE FIX: Visualizer and Overlapping Tokens */
   #visualizer {
-    background: #24292e; color: #e1e4e8; padding: 24px; border-radius: 8px;
-    font-family: "SFMono-Regular", Consolas, monospace; font-size: 13px;
-    line-height: 2.8; word-break: break-all; white-space: pre-wrap; margin-top: 10px;
+    background: #24292e; 
+    color: #e1e4e8 !important; 
+    padding: 25px; 
+    border-radius: 8px;
+    font-family: "SFMono-Regular", Consolas, monospace; 
+    font-size: 14px;
+    /* This line-height ensures the rows don't touch */
+    line-height: 2.8 !important; 
+    word-break: break-all; 
+    white-space: pre-wrap; 
+    margin-top: 10px;
   }
+
   .token-badge { 
-    color: #24292e; padding: 2px 6px; margin: 4px 1px; border-radius: 4px; 
-    font-weight: bold; display: inline-block; vertical-align: top;
+    color: #1a1a1a !important; 
+    padding: 3px 6px; 
+    /* The vertical margin creates the gap between rows */
+    margin: 4px 1px; 
+    border-radius: 4px; 
+    font-weight: bold;
+    /* CRITICAL: This allows the margin to actually push lines apart */
+    display: inline-block; 
+    vertical-align: middle;
+    /* Prevents the badge from being cut off during wrapping */
+    box-decoration-break: clone;
+    -webkit-box-decoration-break: clone;
   }
 </style>
 
@@ -68,14 +91,14 @@ title: AI Token Counter
 </div>
 
 <div class="control-bar">
-  <button class="action-btn" onclick="showExample()">Show Example</button>
+  <button class="action-btn" onclick="showExample()">Example</button>
   <button class="action-btn btn-clear" onclick="clearAll()">Clear All</button>
 </div>
 
-<textarea id="token-input" placeholder="Paste your prompt text here to calculate tokens and costs..."></textarea>
+<textarea id="token-input" placeholder="Paste your text here..."></textarea>
 
 <div class="price-header">
-  <h3 style="font-size: 14px; color: #586069; text-transform: uppercase; margin: 0;">2026 Estimated Costs</h3>
+  <h3 style="font-size: 14px; color: #586069; text-transform: uppercase; margin: 0;">Estimated Costs</h3>
   <div class="toggle-container">
     <button id="btn-input" class="toggle-btn active" onclick="setPricingType('input')">Input</button>
     <button id="btn-output" class="toggle-btn" onclick="setPricingType('output')">Output</button>
@@ -85,10 +108,7 @@ title: AI Token Counter
 <div class="price-container">
   <table>
     <thead>
-      <tr>
-        <th>Model</th>
-        <th style="text-align: right;">Estimated Cost</th>
-      </tr>
+      <tr><th>Model</th><th style="text-align: right;">Cost</th></tr>
     </thead>
     <tbody id="price-table-body"></tbody>
   </table>
@@ -96,7 +116,7 @@ title: AI Token Counter
 
 <div style="margin-top: 30px;">
   <h3 style="font-size: 14px; color: #586069; text-transform: uppercase; margin-bottom: 5px;">Visual Breakdown</h3>
-  <div id="visualizer">Token breakdown will appear here...</div>
+  <div id="visualizer">Breakdown will appear here...</div>
 </div>
 
 <script src="https://unpkg.com/gpt-tokenizer/dist/cl100k_base.js"></script>
@@ -109,21 +129,18 @@ title: AI Token Counter
     { name: "GPT-4o", input: 2.50, output: 10.00 },
     { name: "GPT-4o mini", input: 0.15, output: 0.60 },
     { name: "Claude 3.5 Sonnet", input: 3.00, output: 15.00 },
-    { name: "Claude 3.5 Haiku", input: 0.25, output: 1.25 },
-    { name: "Gemini 1.5 Pro", input: 1.25, output: 5.00 },
     { name: "Gemini 1.5 Flash", input: 0.075, output: 0.30 }
   ];
 
   function clearAll() {
-    const input = document.getElementById('token-input');
-    input.value = '';
-    input.dispatchEvent(new Event('input'));
+    document.getElementById('token-input').value = '';
+    updateUI('');
   }
 
   function showExample() {
-    const input = document.getElementById('token-input');
-    input.value = "Explain the concept of quantum entanglement to a five-year-old using only kitchen metaphors. Keep the response under 200 tokens.";
-    input.dispatchEvent(new Event('input'));
+    const ex = "Tokenization is the process of breaking text into smaller units called tokens. In LLMs, one token is roughly 4 characters.";
+    document.getElementById('token-input').value = ex;
+    updateUI(ex);
   }
 
   function setPricingType(type) {
@@ -144,12 +161,9 @@ title: AI Token Counter
     });
   }
 
-  document.getElementById('token-input').addEventListener('input', function() {
-    const text = this.value;
+  function updateUI(text) {
     const tokens = text ? GPTTokenizer_cl100k_base.encode(text) : [];
     currentTokenCount = tokens.length;
-    
-    // Word Count Logic
     const words = text.trim() ? text.trim().split(/\s+/).length : 0;
     
     document.getElementById('t-count').innerText = currentTokenCount.toLocaleString();
@@ -160,7 +174,7 @@ title: AI Token Counter
 
     const visualizer = document.getElementById('visualizer');
     if (tokens.length === 0) {
-      visualizer.innerText = 'Token breakdown will appear here...';
+      visualizer.innerText = 'Breakdown will appear here...';
       return;
     }
 
@@ -173,8 +187,8 @@ title: AI Token Counter
       span.style.backgroundColor = colors[i % colors.length];
       visualizer.appendChild(span);
     });
-  });
+  }
 
-  // Initial pricing render
+  document.getElementById('token-input').addEventListener('input', (e) => updateUI(e.target.value));
   renderPricing();
 </script>
