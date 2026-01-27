@@ -1,89 +1,70 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Token Calculator</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/js-tiktoken@1.0.7/dist/index.min.js"></script>
-    <style>
-        .token-badge { display: inline-block; padding: 0 4px; border-radius: 4px; margin: 1px; border: 1px solid rgba(0,0,0,0.1); font-family: monospace; }
-    </style>
-</head>
-<body class="bg-slate-100 p-4 md:p-10">
-    <div class="max-w-3xl mx-auto space-y-6">
-        <div class="bg-white p-8 rounded-2xl shadow-sm border border-slate-200">
-            <div class="flex justify-between items-center mb-6">
-                <h1 class="text-2xl font-bold text-slate-800">Token Calculator</h1>
-                <span id="status-pill" class="px-3 py-1 rounded-full text-xs font-bold bg-amber-100 text-amber-700">Initializing...</span>
-            </div>
+---
+layout: default
+title: GPT Token Calculator
+---
 
-            <textarea id="input" class="w-full h-48 p-4 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all mb-6" placeholder="Loading tokenizer..."></textarea>
-            
-            <div class="flex gap-4">
-                <div class="flex-1 bg-blue-50 p-4 rounded-xl border border-blue-100 text-center">
-                    <div class="text-sm text-blue-600 font-bold uppercase tracking-wider">Tokens</div>
-                    <div id="t-count" class="text-4xl font-mono font-black text-blue-900">0</div>
-                </div>
-                <div class="flex-1 bg-slate-50 p-4 rounded-xl border border-slate-200 text-center">
-                    <div class="text-sm text-slate-500 font-bold uppercase tracking-wider">Characters</div>
-                    <div id="c-count" class="text-4xl font-mono font-black text-slate-700">0</div>
-                </div>
-            </div>
+<div class="calculator-wrapper" style="margin-top: 2rem;">
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem;">
+        <div style="background: #f0f7ff; padding: 1.5rem; border-radius: 12px; border: 1px solid #dbeafe; text-align: center;">
+            <p style="margin: 0; font-size: 0.8rem; color: #1e40af; font-weight: bold; uppercase;">Tokens</p>
+            <p id="t-count" style="margin: 0; font-size: 2.5rem; font-weight: 900; color: #1e3a8a;">0</p>
         </div>
-
-        <div class="bg-white p-8 rounded-2xl shadow-sm border border-slate-200">
-            <h2 class="text-sm font-bold text-slate-400 uppercase tracking-widest mb-4">Visual Breakdown</h2>
-            <div id="visualizer" class="whitespace-pre-wrap leading-relaxed min-h-[100px] text-lg text-slate-800"></div>
+        <div style="background: #f9fafb; padding: 1.5rem; border-radius: 12px; border: 1px solid #e5e7eb; text-align: center;">
+            <p style="margin: 0; font-size: 0.8rem; color: #6b7280; font-weight: bold; uppercase;">Characters</p>
+            <p id="c-count" style="margin: 0; font-size: 2.5rem; font-weight: 900; color: #374151;">0</p>
         </div>
     </div>
 
-    <script>
-        // Use window.onload to ensure the external library is fully parsed
-        window.onload = function() {
-            const status = document.getElementById('status-pill');
-            const input = document.getElementById('input');
-            const visualizer = document.getElementById('visualizer');
-            const tCount = document.getElementById('t-count');
-            const cCount = document.getElementById('c-count');
+    <textarea id="token-input" rows="8" 
+        style="width: 100%; padding: 1rem; border: 2px solid #e5e7eb; border-radius: 12px; font-size: 1rem; outline: none; transition: border-color 0.2s;"
+        placeholder="Paste your text here..."></textarea>
 
-            try {
-                // Accessing the library via the global 'tiktoken' object
-                const enc = tiktoken.getEncoding("cl100k_base");
-                const colors = ['#dbeafe', '#fef3c7', '#dcfce7', '#fee2e2', '#f3e8ff'];
+    <div style="margin-top: 2rem; border-top: 1px solid #eee; pt: 1.5rem;">
+        <h3 style="font-size: 0.9rem; color: #9ca3af; text-transform: uppercase; margin-bottom: 1rem;">Visual Breakdown</h3>
+        <div id="visualizer" style="font-family: monospace; background: #fafafa; padding: 1rem; border-radius: 8px; min-height: 100px; line-height: 1.8; word-break: break-all; white-space: pre-wrap;"></div>
+    </div>
+</div>
 
-                status.innerText = "Ready";
-                status.className = "px-3 py-1 rounded-full text-xs font-bold bg-green-100 text-green-700";
-                input.placeholder = "Paste your text here to count tokens...";
+<script src="https://unpkg.com/gpt-tokenizer/dist/cl100k_base.js"></script>
 
-                input.addEventListener('input', () => {
-                    const val = input.value;
-                    if (!val) {
-                        tCount.innerText = '0';
-                        cCount.innerText = '0';
-                        visualizer.innerHTML = '';
-                        return;
-                    }
+<script>
+    const input = document.getElementById('token-input');
+    const tCount = document.getElementById('t-count');
+    const cCount = document.getElementById('c-count');
+    const visualizer = document.getElementById('visualizer');
+    const colors = ['#bfdbfe', '#fef3c7', '#dcfce7', '#fee2e2', '#f3e8ff'];
 
-                    const tokens = enc.encode(val);
-                    tCount.innerText = tokens.length;
-                    cCount.innerText = val.length;
+    input.addEventListener('input', () => {
+        const text = input.value;
+        if (!text) {
+            tCount.innerText = '0';
+            cCount.innerText = '0';
+            visualizer.innerHTML = '';
+            return;
+        }
 
-                    visualizer.innerHTML = '';
-                    tokens.forEach((id, i) => {
-                        const span = document.createElement('span');
-                        span.className = 'token-badge';
-                        span.style.backgroundColor = colors[i % colors.length];
-                        span.innerText = enc.decode([id]);
-                        visualizer.appendChild(span);
-                    });
-                });
-            } catch (e) {
-                console.error(e);
-                status.innerText = "Error: Library blocked";
-                status.className = "px-3 py-1 rounded-full text-xs font-bold bg-red-100 text-red-700";
-            }
-        };
-    </script>
-</body>
-</html>
+        // GPTTokenizer_cl100k_base is the global provided by the script
+        const tokens = GPTTokenizer_cl100k_base.encode(text);
+        tCount.innerText = tokens.length;
+        cCount.innerText = text.length;
+
+        visualizer.innerHTML = '';
+        tokens.forEach((id, i) => {
+            const span = document.createElement('span');
+            const chunk = GPTTokenizer_cl100k_base.decode([id]);
+            
+            span.innerText = chunk;
+            span.style.backgroundColor = colors[i % colors.length];
+            span.style.padding = '2px 4px';
+            span.style.margin = '1px';
+            span.style.borderRadius = '3px';
+            span.style.display = 'inline-block';
+            
+            visualizer.appendChild(span);
+        });
+    });
+
+    // Handle focus effect manually since we aren't using Tailwind here
+    input.onfocus = () => input.style.borderColor = '#3b82f6';
+    input.onblur = () => input.style.borderColor = '#e5e7eb';
+</script>
