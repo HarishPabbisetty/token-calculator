@@ -6,77 +6,83 @@
     <title>Token Calculator</title>
     <style>
         :root {
-            --sidebar-w: 240px; 
+            --sidebar-w: 220px; 
             --brand: #2563eb; --bg-app: #f8fafc;
             --card-bg: #ffffff; --text-main: #1e293b; --text-muted: #64748b;
-            --border: #e2e8f0; --danger: #ef4444; --success: #22c55e;
+            --border: #e2e8f0; --accent-bg: #f0f7ff;
+            --danger: #ef4444; --success: #22c55e;
             --t1: #dbeafe; --t2: #fef3c7; --t3: #dcfce7; --t4: #f3e8ff;
         }
         @media (prefers-color-scheme: dark) {
             :root {
                 --bg-app: #0f172a; --card-bg: #1e293b; --text-main: #f1f5f9;
-                --text-muted: #94a3b8; --border: #334155;
+                --text-muted: #94a3b8; --border: #334155; --accent-bg: #1e293b;
             }
         }
         
         body { margin: 0; font-family: 'Inter', system-ui, sans-serif; background: var(--bg-app); color: var(--text-main); -webkit-font-smoothing: antialiased; }
         .app-container { display: flex; min-height: 100vh; width: 100%; overflow-x: hidden; }
 
-        /* Sidebar Restored */
         aside {
-            width: var(--sidebar-w); min-width: var(--sidebar-w); background: var(--card-bg); border-right: 1px solid var(--border);
-            display: flex; flex-direction: column; padding: 20px; box-sizing: border-box; height: 100vh; position: sticky; top: 0;
+            width: var(--sidebar-w); min-width: var(--sidebar-w);
+            background: var(--card-bg); border-right: 1px solid var(--border);
+            display: flex; flex-direction: column; padding: 16px; box-sizing: border-box;
+            height: 100vh; position: sticky; top: 0;
         }
         @media (max-width: 1023px) {
-            aside { position: fixed; left: 0; z-index: 2000; transform: translateX(-100%); transition: 0.3s; }
+            aside { position: fixed; left: 0; top: 0; bottom: 0; z-index: 2000; transform: translateX(-100%); transition: 0.3s; }
             aside.open { transform: translateX(0); }
         }
 
-        .main-content { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+        .main-content { flex: 1; min-width: 0; display: flex; flex-direction: column; }
         header { height: 60px; background: var(--card-bg); border-bottom: 1px solid var(--border); display: flex; align-items: center; padding: 0 20px; justify-content: space-between; }
-        main { padding: 20px; box-sizing: border-box; }
+        main { padding: 20px; box-sizing: border-box; width: 100%; }
         
-        /* Layout Grid restored */
-        .workspace-layout { display: grid; grid-template-columns: 1fr; gap: 20px; }
-        @media (min-width: 1200px) { .workspace-layout { grid-template-columns: 4.5fr 5.5fr; } }
-
         .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin-bottom: 20px; }
-        .glass-card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 12px; padding: 16px; }
+        .glass-card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 10px; padding: 16px; }
 
-        textarea { width: 100%; min-height: 280px; padding: 15px; border-radius: 10px; border: 1px solid var(--border); background: var(--bg-app); color: var(--text-main); font-size: 15px; resize: vertical; box-sizing: border-box; }
+        .workspace-layout { display: grid; grid-template-columns: 1fr; gap: 20px; }
+        @media (min-width: 1200px) { .workspace-layout { grid-template-columns: 4fr 6fr; } }
+
+        textarea { width: 100%; min-height: 250px; padding: 15px; border-radius: 10px; border: 1px solid var(--border); background: var(--bg-app); color: var(--text-main); font-size: 15px; resize: vertical; box-sizing: border-box; }
 
         .controls-row { display: flex; gap: 10px; margin-bottom: 12px; }
-        .search-input { flex: 1; padding: 10px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg-app); color: var(--text-main); outline: none; }
+        .search-input { flex: 1; padding: 10px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg-app); color: var(--text-main); outline: none; font-size: 14px; }
 
-        .table-container { overflow-x: auto; scrollbar-width: none; -ms-overflow-style: none; }
+        .table-container { 
+            padding: 15px; overflow-x: auto; 
+            scrollbar-width: none; -ms-overflow-style: none;
+        }
         .table-container::-webkit-scrollbar { display: none; }
 
         table { width: 100%; border-collapse: collapse; font-size: 13px; }
         th { text-align: left; padding: 12px; color: var(--text-muted); border-bottom: 2px solid var(--border); }
         td { padding: 14px 12px; border-bottom: 1px solid var(--border); vertical-align: top; }
-        
-        /* Progress Bar */
-        .ctx-bar-bg { width: 100%; height: 5px; background: var(--border); border-radius: 10px; margin-top: 6px; overflow: hidden; }
-        .ctx-bar-fill { height: 100%; transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1); }
 
-        .num { font-family: monospace; text-align: right; font-weight: 600; }
-        .btn { padding: 8px 14px; border-radius: 8px; border: 1px solid var(--border); background: var(--card-bg); cursor: pointer; font-size: 13px; font-weight: 500; }
+        /* Context Alert Bar */
+        .ctx-bar-bg { width: 100%; height: 5px; background: var(--border); border-radius: 10px; margin-top: 6px; overflow: hidden; }
+        .ctx-bar-fill { height: 100%; transition: width 0.4s ease; }
+
+        .num { font-family: monospace; text-align: right; font-weight: 500; }
+        .model-name { color: var(--brand); cursor: pointer; font-weight: 600; text-decoration: underline; }
+        .btn { padding: 8px 14px; border-radius: 8px; border: 1px solid var(--border); background: var(--card-bg); cursor: pointer; font-size: 13px; font-weight: 500; transition: all 0.2s; }
         .copy-trigger { cursor: pointer; margin-left: 8px; color: var(--text-muted); }
+        .token-span { padding: 2px 4px; border-radius: 4px; margin: 1px; display: inline-block; font-family: monospace; font-size: 11px; }
     </style>
 </head>
 <body>
 
 <div class="app-container">
     <aside id="sidebar">
-        <h3 style="color:var(--brand); margin: 0 0 15px 0;">Token Calculator</h3>
+        <h3 style="margin:0 0 15px 0; color:var(--brand);">Token Calculator</h3>
         <div id="history-list" style="flex:1; overflow-y:auto; font-size:11px;"></div>
-        <button class="btn" style="background:var(--brand); color:white; border:none; margin: 15px 0 8px 0;" onclick="saveToHistory()">💾 Save</button>
+        <button class="btn" style="background:var(--brand); color:white; border:none; margin-top:15px; margin-bottom:8px;" onclick="saveToHistory()">💾 Save</button>
         <button class="btn" style="color:var(--danger); border-color:#fee2e2" onclick="clearHistory()">🗑 Clear History</button>
     </aside>
 
     <div class="main-content">
         <header>
-            <div style="display:flex; gap:10px;">
+            <div style="display:flex; gap:10px; align-items:center;">
                 <button class="btn" onclick="document.getElementById('sidebar').classList.toggle('open')">☰</button>
                 <select id="ratio" onchange="calculate()" class="btn">
                     <option value="1">1:1 Chat</option>
@@ -98,9 +104,9 @@
             <div class="stats-grid">
                 <div class="glass-card"><small style="font-weight:700;">TOKENS IN</small><div id="in-count" style="font-size:24px; font-weight:800; margin-top:5px;">0</div></div>
                 <div class="glass-card" style="border-left: 4px solid var(--brand);">
-                    <div style="display:flex; justify-content:space-between;">
+                    <div style="display:flex; justify-content:space-between; align-items:start;">
                         <small style="font-weight:700;">TOTAL COST</small>
-                        <span id="copyBtn" class="copy-trigger" onclick="copyCost()">📋</span>
+                        <span id="copyBtn" class="copy-trigger" onclick="copyCost()" title="Copy Cost">📋</span>
                     </div>
                     <div id="total-cost" style="font-size:24px; font-weight:800; color:var(--brand); margin-top:5px;">$0.00</div>
                 </div>
@@ -108,8 +114,8 @@
 
             <div class="workspace-layout">
                 <div>
-                    <textarea id="input" placeholder="Paste your prompt here..." oninput="calculate()"></textarea>
-                    <div id="viz" class="glass-card" style="margin-top:15px; min-height:60px;"></div>
+                    <textarea id="input" placeholder="Paste text here..." oninput="calculate()"></textarea>
+                    <div id="viz" class="glass-card" style="margin-top:15px; min-height:80px;"></div>
                 </div>
                 <div class="glass-card table-container">
                     <div class="controls-row">
@@ -121,7 +127,7 @@
                     </div>
                     <table>
                         <thead>
-                            <tr><th>Model / Limit</th><th class="num">In</th><th class="num">Out</th><th class="num">Total</th></tr>
+                            <tr><th>Model / Context Window</th><th class="num">In</th><th class="num">Out</th><th class="num">Total</th></tr>
                         </thead>
                         <tbody id="table-body"></tbody>
                     </table>
@@ -143,7 +149,7 @@
             const rateRes = await fetch('https://api.exchangerate-api.com/v4/latest/USD');
             const data = await rateRes.json();
             exchangeRates.INR = data.rates.INR;
-        } catch(e) { console.warn("Fallback active."); }
+        } catch(e) { console.warn("Using default rates."); }
         renderHistory();
         calculate();
     }
@@ -152,11 +158,11 @@
         const text = document.getElementById('input').value;
         const searchTerm = document.getElementById('modelSearch').value.toLowerCase();
         const sortOrder = document.getElementById('sortOrder').value;
+        const curr = document.getElementById('curr').value;
+        const ratio = parseFloat(document.getElementById('ratio').value);
+        
         const tokens = text ? GPTTokenizer_cl100k_base.encode(text) : [];
         const count = tokens.length;
-        const ratio = parseFloat(document.getElementById('ratio').value);
-        const curr = document.getElementById('curr').value;
-        
         document.getElementById('in-count').innerText = count.toLocaleString();
 
         let data = models.map(m => {
@@ -165,7 +171,8 @@
             return { ...m, cIn, cOut, total: cIn + cOut };
         });
 
-        data.sort((a,b) => sortOrder === 'desc' ? b.total - a.total : a.total - b.total);
+        if(sortOrder === 'desc') data.sort((a,b) => b.total - a.total);
+        else data.sort((a,b) => a.total - b.total);
 
         let html = ''; let totalSum = 0; let visible = 0;
         data.forEach(m => {
@@ -174,16 +181,17 @@
                 const limit = m.limit || 128000;
                 const pct = Math.min((count / limit) * 100, 100);
                 const isOver = count > limit;
-                const f = (val) => (curr === 'INR' ? '₹' : '$') + (val * exchangeRates[curr]).toFixed(val * exchangeRates[curr] < 0.01 ? 4 : 2);
+                const sym = curr === 'INR' ? '₹' : '$';
+                const f = (val) => sym + (val * exchangeRates[curr]).toFixed(val * exchangeRates[curr] < 0.01 ? 4 : 2);
 
                 html += `<tr>
                     <td>
                         <div style="font-weight:700; color:${isOver ? 'var(--danger)' : 'var(--brand)'}">${m.name} ${isOver ? '⚠️' : ''}</div>
-                        <div style="font-size:10px; color:var(--text-muted)">Limit: ${limit/1000}K</div>
+                        <div style="font-size:10px; color:var(--text-muted)">Limit: ${limit/1000}K tokens</div>
                         <div class="ctx-bar-bg"><div class="ctx-bar-fill" style="width:${pct}%; background:${isOver ? 'var(--danger)' : 'var(--brand)'}"></div></div>
                     </td>
                     <td class="num">${f(m.cIn)}</td><td class="num">${f(m.cOut)}</td>
-                    <td class="num" style="color:var(--brand)">${f(m.total)}</td>
+                    <td class="num" style="color:var(--brand); font-weight:700;">${f(m.total)}</td>
                 </tr>`;
             }
         });
@@ -191,28 +199,29 @@
         document.getElementById('table-body').innerHTML = html || '<tr><td colspan="4">No results</td></tr>';
         const sym = curr === 'INR' ? '₹' : '$';
         document.getElementById('total-cost').innerText = sym + ((visible ? totalSum/visible : 0) * exchangeRates[curr]).toFixed(2);
+
+        const viz = document.getElementById('viz');
+        viz.innerHTML = '<small style="display:block;margin-bottom:8px;color:var(--text-muted)">Token Visualization:</small>';
+        tokens.slice(0, 50).forEach((t, i) => {
+            const s = document.createElement('span'); s.className = 'token-span';
+            s.style.background = `var(--t${(i % 4) + 1})`;
+            s.textContent = GPTTokenizer_cl100k_base.decode([t]);
+            viz.appendChild(s);
+        });
     }
 
-    // Restored Features
     function jokeExample() {
-        const samples = [
-            "Explain quantum physics to a cat in 500 words.",
-            "Write a funny story about an AI that wants to become a baker.",
-            "Analyze the economic impact of colonizing Mars using multiple sources."
-        ];
+        const samples = ["Explain thermodynamics to a 5-year old.", "Write a 1000-word blog post about AI in 2026.", "Help me write a professional email to my boss about a raise."];
         document.getElementById('input').value = samples[Math.floor(Math.random()*samples.length)];
         calculate();
     }
-
     function clearEditor() { document.getElementById('input').value = ''; calculate(); }
-
     function copyCost() {
         navigator.clipboard.writeText(document.getElementById('total-cost').innerText).then(() => {
             const b = document.getElementById('copyBtn'); b.innerText = '✅';
             setTimeout(() => b.innerText = '📋', 1500);
         });
     }
-
     function saveToHistory() {
         const text = document.getElementById('input').value; if(!text) return;
         const h = JSON.parse(localStorage.getItem('h') || '[]');
@@ -220,17 +229,11 @@
         localStorage.setItem('h', JSON.stringify(h.slice(0,10)));
         renderHistory();
     }
-
     function renderHistory() {
         const h = JSON.parse(localStorage.getItem('h') || '[]');
-        document.getElementById('history-list').innerHTML = h.map(i => `
-            <div style="padding:10px; border-bottom:1px solid var(--border); cursor:pointer;" onclick="document.getElementById('input').value='${i.t.replace(/'/g, "\\'")}';calculate();">
-                <b>${i.d}</b>: ${i.t.substring(0,25)}...
-            </div>`).join('') || '<p style="padding:10px;">No history</p>';
+        document.getElementById('history-list').innerHTML = h.map(i => `<div style="padding:10px; border-bottom:1px solid var(--border); cursor:pointer;" onclick="document.getElementById('input').value='${i.t.replace(/'/g, "\\'")}';calculate();"><b>${i.d}</b>: ${i.t.substring(0,25)}...</div>`).join('') || '<p>No history</p>';
     }
-
-    function clearHistory() { if(confirm("Wipe history?")) { localStorage.removeItem('h'); renderHistory(); } }
-
+    function clearHistory() { if(confirm("Clear?")) { localStorage.removeItem('h'); renderHistory(); } }
     init();
 </script>
 </body>
