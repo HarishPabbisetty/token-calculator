@@ -22,7 +22,7 @@
         body { margin: 0; font-family: 'Inter', system-ui, sans-serif; background: var(--bg-app); color: var(--text-main); -webkit-font-smoothing: antialiased; }
         .app-container { display: flex; min-height: 100vh; width: 100%; overflow-x: hidden; }
 
-        /* Sidebar */
+        /* Sidebar Wall */
         aside {
             width: var(--sidebar-w); min-width: var(--sidebar-w);
             background: var(--card-bg); border-right: 1px solid var(--border);
@@ -42,12 +42,13 @@
         .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin-bottom: 20px; }
         .glass-card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 10px; padding: 16px; }
 
+        /* Table priority layout: Input 40% | Table 60% */
         .workspace-layout { display: grid; grid-template-columns: 1fr; gap: 20px; }
         @media (min-width: 1200px) { .workspace-layout { grid-template-columns: 4fr 6fr; } }
 
         textarea { width: 100%; min-height: 200px; padding: 15px; border-radius: 10px; border: 1px solid var(--border); background: var(--bg-app); color: var(--text-main); font-size: 15px; resize: vertical; box-sizing: border-box; }
 
-        /* Bigger Table */
+        /* Table Styling */
         table { width: 100%; border-collapse: collapse; font-size: 14px; }
         th { text-align: left; padding: 15px; color: var(--text-muted); border-bottom: 2px solid var(--border); }
         td { padding: 15px; border-bottom: 1px solid var(--border); }
@@ -87,8 +88,8 @@
                 <button class="btn" onclick="document.getElementById('sidebar').classList.toggle('open')">☰</button>
                 <select id="ratio" onchange="calculate()" class="btn">
                     <option value="1">1:1 Chat</option>
-                    <option value="0.3">1:0.3 Summary</option>
-                    <option value="5">1:5 Content</option>
+                    <option value="0.2">1:0.2 Summary</option>
+                    <option value="3">1:3 Creative</option>
                 </select>
             </div>
             <div style="display:flex; gap:10px;">
@@ -126,7 +127,7 @@
 
 <script src="https://unpkg.com/gpt-tokenizer/dist/cl100k_base.js"></script>
 <script>
-    let models = []; // Now populated by models.json
+    let models = [];
 
     const jokes = [
         "Why did the AI go to the party? Because it heard they were serving 'chips'.",
@@ -141,9 +142,8 @@
             renderHistory();
             calculate();
         } catch (e) {
-            console.error("Error loading models.json. Make sure the file exists in the same folder.");
-            // Fallback for testing
-            models = [{id: "error", name: "Error Loading Models", in: 0, out: 0, info: "Check console."}];
+            console.error("Error loading models.json");
+            models = [{name: "No Models Found", input: 0, output: 0}];
             calculate();
         }
     }
@@ -168,13 +168,13 @@
         
         let html = ''; let totalSum = 0;
         models.forEach(m => {
-            const costIn = (count / 1000000) * m.input; // Ensure your JSON uses "input"
-            const costOut = ((count * ratio) / 1000000) * m.output; // Ensure your JSON uses "output"
+            const costIn = (count / 1000000) * m.input;
+            const costOut = ((count * ratio) / 1000000) * m.output;
             const total = costIn + costOut;
             totalSum += total;
             
             html += `<tr>
-                <td class="model-name" onclick="showInfo('${m.id}')">${m.name}</td>
+                <td class="model-name" onclick="showInfo('${m.name}')">${m.name}</td>
                 <td class="num">$${costIn.toFixed(4)}</td>
                 <td class="num">$${costOut.toFixed(4)}</td>
                 <td class="num" style="font-weight:bold; color:var(--brand); background:var(--accent-bg)">$${total.toFixed(4)}</td>
@@ -194,11 +194,11 @@
         });
     }
 
-    function showInfo(id) {
-        const m = models.find(x => x.id === id);
+    function showInfo(name) {
+        const m = models.find(x => x.name === name);
         if(!m) return;
         document.getElementById('m-title').innerText = m.name;
-        document.getElementById('m-desc').innerText = m.info || "No details provided for this model.";
+        document.getElementById('m-desc').innerText = m.info || "Technical specs for " + m.name + " are not yet listed. Contact admin to update info fields in models.json.";
         document.getElementById('info-modal').classList.add('active');
     }
 
@@ -227,7 +227,7 @@
         }
     }
 
-    init(); // Start the fetch process
+    init();
 </script>
 </body>
 </html>
