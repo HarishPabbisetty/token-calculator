@@ -22,6 +22,7 @@
         body { margin: 0; font-family: 'Inter', system-ui, sans-serif; background: var(--bg-app); color: var(--text-main); -webkit-font-smoothing: antialiased; }
         .app-container { display: flex; min-height: 100vh; width: 100%; overflow-x: hidden; }
 
+        /* Sidebar Restored */
         aside {
             width: var(--sidebar-w); min-width: var(--sidebar-w); background: var(--card-bg); border-right: 1px solid var(--border);
             display: flex; flex-direction: column; padding: 20px; box-sizing: border-box; height: 100vh; position: sticky; top: 0;
@@ -35,31 +36,30 @@
         header { height: 60px; background: var(--card-bg); border-bottom: 1px solid var(--border); display: flex; align-items: center; padding: 0 20px; justify-content: space-between; }
         main { padding: 20px; box-sizing: border-box; }
         
+        /* Layout Grid restored */
+        .workspace-layout { display: grid; grid-template-columns: 1fr; gap: 20px; }
+        @media (min-width: 1200px) { .workspace-layout { grid-template-columns: 4.5fr 5.5fr; } }
+
         .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin-bottom: 20px; }
         .glass-card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 12px; padding: 16px; }
 
-        .workspace-layout { display: grid; grid-template-columns: 1fr; gap: 20px; }
-        @media (min-width: 1200px) { .workspace-layout { grid-template-columns: 4fr 6fr; } }
-
-        textarea { width: 100%; min-height: 220px; padding: 15px; border-radius: 10px; border: 1px solid var(--border); background: var(--bg-app); color: var(--text-main); font-size: 15px; resize: vertical; box-sizing: border-box; }
+        textarea { width: 100%; min-height: 280px; padding: 15px; border-radius: 10px; border: 1px solid var(--border); background: var(--bg-app); color: var(--text-main); font-size: 15px; resize: vertical; box-sizing: border-box; }
 
         .controls-row { display: flex; gap: 10px; margin-bottom: 12px; }
         .search-input { flex: 1; padding: 10px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg-app); color: var(--text-main); outline: none; }
 
-        .table-container { overflow-x: auto; scrollbar-width: none; }
+        .table-container { overflow-x: auto; scrollbar-width: none; -ms-overflow-style: none; }
         .table-container::-webkit-scrollbar { display: none; }
 
         table { width: 100%; border-collapse: collapse; font-size: 13px; }
         th { text-align: left; padding: 12px; color: var(--text-muted); border-bottom: 2px solid var(--border); }
         td { padding: 14px 12px; border-bottom: 1px solid var(--border); vertical-align: top; }
         
-        /* Context Bar Logic */
-        .ctx-container { margin-top: 6px; }
-        .ctx-bar-bg { width: 100%; height: 5px; background: var(--border); border-radius: 10px; overflow: hidden; }
-        .ctx-bar-fill { height: 100%; transition: width 0.5s ease; }
+        /* Progress Bar */
+        .ctx-bar-bg { width: 100%; height: 5px; background: var(--border); border-radius: 10px; margin-top: 6px; overflow: hidden; }
+        .ctx-bar-fill { height: 100%; transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1); }
 
         .num { font-family: monospace; text-align: right; font-weight: 600; }
-        .model-name { color: var(--brand); cursor: pointer; font-weight: 600; text-decoration: underline; }
         .btn { padding: 8px 14px; border-radius: 8px; border: 1px solid var(--border); background: var(--card-bg); cursor: pointer; font-size: 13px; font-weight: 500; }
         .copy-trigger { cursor: pointer; margin-left: 8px; color: var(--text-muted); }
     </style>
@@ -68,15 +68,15 @@
 
 <div class="app-container">
     <aside id="sidebar">
-        <h3 style="color:var(--brand); margin-top:0;">Token Calculator</h3>
-        <div id="history-list" style="flex:1; overflow-y:auto; font-size:11px; margin: 15px 0;"></div>
-        <button class="btn" style="background:var(--brand); color:white; border:none; margin-bottom:8px;" onclick="saveToHistory()">💾 Save</button>
+        <h3 style="color:var(--brand); margin: 0 0 15px 0;">Token Calculator</h3>
+        <div id="history-list" style="flex:1; overflow-y:auto; font-size:11px;"></div>
+        <button class="btn" style="background:var(--brand); color:white; border:none; margin: 15px 0 8px 0;" onclick="saveToHistory()">💾 Save</button>
         <button class="btn" style="color:var(--danger); border-color:#fee2e2" onclick="clearHistory()">🗑 Clear History</button>
     </aside>
 
     <div class="main-content">
         <header>
-            <div style="display:flex; gap:10px; align-items:center;">
+            <div style="display:flex; gap:10px;">
                 <button class="btn" onclick="document.getElementById('sidebar').classList.toggle('open')">☰</button>
                 <select id="ratio" onchange="calculate()" class="btn">
                     <option value="1">1:1 Chat</option>
@@ -85,10 +85,11 @@
                 </select>
             </div>
             <div style="display:flex; gap:10px;">
-                <button class="btn" onclick="jokeExample()">🎭 Humor</button>
+                <button class="btn" onclick="jokeExample()">🎭 Example</button>
                 <button class="btn" onclick="clearEditor()" style="color:var(--danger)">Clear</button>
                 <select id="curr" onchange="calculate()" class="btn">
-                    <option value="USD">$ USD</option><option value="INR">₹ INR</option>
+                    <option value="USD">$ USD</option>
+                    <option value="INR">₹ INR</option>
                 </select>
             </div>
         </header>
@@ -107,8 +108,8 @@
 
             <div class="workspace-layout">
                 <div>
-                    <textarea id="input" placeholder="Paste your text here..." oninput="calculate()"></textarea>
-                    <div id="viz" class="glass-card" style="margin-top:15px; min-height:80px; font-size: 11px;"></div>
+                    <textarea id="input" placeholder="Paste your prompt here..." oninput="calculate()"></textarea>
+                    <div id="viz" class="glass-card" style="margin-top:15px; min-height:60px;"></div>
                 </div>
                 <div class="glass-card table-container">
                     <div class="controls-row">
@@ -120,7 +121,7 @@
                     </div>
                     <table>
                         <thead>
-                            <tr><th>Model / Context</th><th class="num">In</th><th class="num">Out</th><th class="num">Total</th></tr>
+                            <tr><th>Model / Limit</th><th class="num">In</th><th class="num">Out</th><th class="num">Total</th></tr>
                         </thead>
                         <tbody id="table-body"></tbody>
                     </table>
@@ -137,12 +138,12 @@
 
     async function init() {
         try {
-            const res = await fetch('models.json?nocache=' + Date.now());
+            const res = await fetch('models.json?v=' + Date.now());
             models = await res.json();
             const rateRes = await fetch('https://api.exchangerate-api.com/v4/latest/USD');
-            const rateData = await rateRes.json();
-            exchangeRates.INR = rateData.rates.INR;
-        } catch(e) { console.warn("Init fallback active."); }
+            const data = await rateRes.json();
+            exchangeRates.INR = data.rates.INR;
+        } catch(e) { console.warn("Fallback active."); }
         renderHistory();
         calculate();
     }
@@ -158,39 +159,52 @@
         
         document.getElementById('in-count').innerText = count.toLocaleString();
 
-        let processed = models.map(m => {
+        let data = models.map(m => {
             const cIn = (count / 1000000) * (m.input || 0);
             const cOut = ((count * ratio) / 1000000) * (m.output || 0);
             return { ...m, cIn, cOut, total: cIn + cOut };
         });
 
-        processed.sort((a,b) => sortOrder === 'desc' ? b.total - a.total : a.total - b.total);
+        data.sort((a,b) => sortOrder === 'desc' ? b.total - a.total : a.total - b.total);
 
         let html = ''; let totalSum = 0; let visible = 0;
-        processed.forEach(m => {
+        data.forEach(m => {
             if (m.name.toLowerCase().includes(searchTerm)) {
                 totalSum += m.total; visible++;
                 const limit = m.limit || 128000;
                 const pct = Math.min((count / limit) * 100, 100);
                 const isOver = count > limit;
-                
                 const f = (val) => (curr === 'INR' ? '₹' : '$') + (val * exchangeRates[curr]).toFixed(val * exchangeRates[curr] < 0.01 ? 4 : 2);
 
                 html += `<tr>
                     <td>
                         <div style="font-weight:700; color:${isOver ? 'var(--danger)' : 'var(--brand)'}">${m.name} ${isOver ? '⚠️' : ''}</div>
-                        <div style="font-size:10px; color:var(--text-muted)">Limit: ${(limit/1000)}K</div>
-                        <div class="ctx-container"><div class="ctx-bar-bg"><div class="ctx-bar-fill" style="width:${pct}%; background:${isOver ? 'var(--danger)' : 'var(--brand)'}"></div></div></div>
+                        <div style="font-size:10px; color:var(--text-muted)">Limit: ${limit/1000}K</div>
+                        <div class="ctx-bar-bg"><div class="ctx-bar-fill" style="width:${pct}%; background:${isOver ? 'var(--danger)' : 'var(--brand)'}"></div></div>
                     </td>
                     <td class="num">${f(m.cIn)}</td><td class="num">${f(m.cOut)}</td>
                     <td class="num" style="color:var(--brand)">${f(m.total)}</td>
                 </tr>`;
             }
         });
-        document.getElementById('table-body').innerHTML = html;
+
+        document.getElementById('table-body').innerHTML = html || '<tr><td colspan="4">No results</td></tr>';
         const sym = curr === 'INR' ? '₹' : '$';
         document.getElementById('total-cost').innerText = sym + ((visible ? totalSum/visible : 0) * exchangeRates[curr]).toFixed(2);
     }
+
+    // Restored Features
+    function jokeExample() {
+        const samples = [
+            "Explain quantum physics to a cat in 500 words.",
+            "Write a funny story about an AI that wants to become a baker.",
+            "Analyze the economic impact of colonizing Mars using multiple sources."
+        ];
+        document.getElementById('input').value = samples[Math.floor(Math.random()*samples.length)];
+        calculate();
+    }
+
+    function clearEditor() { document.getElementById('input').value = ''; calculate(); }
 
     function copyCost() {
         navigator.clipboard.writeText(document.getElementById('total-cost').innerText).then(() => {
@@ -210,14 +224,12 @@
     function renderHistory() {
         const h = JSON.parse(localStorage.getItem('h') || '[]');
         document.getElementById('history-list').innerHTML = h.map(i => `
-            <div style="padding:8px; border-bottom:1px solid var(--border); cursor:pointer;" onclick="document.getElementById('input').value='${i.t.replace(/'/g, "\\'")}';calculate();">
+            <div style="padding:10px; border-bottom:1px solid var(--border); cursor:pointer;" onclick="document.getElementById('input').value='${i.t.replace(/'/g, "\\'")}';calculate();">
                 <b>${i.d}</b>: ${i.t.substring(0,25)}...
-            </div>`).join('') || '<p>No history</p>';
+            </div>`).join('') || '<p style="padding:10px;">No history</p>';
     }
 
-    function clearEditor() { document.getElementById('input').value = ''; calculate(); }
     function clearHistory() { if(confirm("Wipe history?")) { localStorage.removeItem('h'); renderHistory(); } }
-    function jokeExample() { document.getElementById('input').value = "Why did the AI go to therapy? It had too many processing issues."; calculate(); }
 
     init();
 </script>
