@@ -1,15 +1,7 @@
-# Theme Selection
-theme: jekyll-theme-minimal
-
-# Site Metadata
-title: GPT Token Counter
-description: A private, browser-side tool to calculate tokens for GPT-4 and GPT-3.5 without sending data to an API.
+theme: jekyll-theme-cayman
+title: AI Token Counter
+description: A high-precision token counter and cost estimator for GPT-4o, Claude, and Gemini.
 show_downloads: false
-
-# Sidebar Links
 github:
   is_project_page: true
   repository_url: https://github.com/HarishPabbisetty/token-calculator
-
-# Clean URLs
-permalink: /:title/
