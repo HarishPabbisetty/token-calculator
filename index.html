@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Token Calculator Pro v1.3.1</title>
+    <title>Token Calculator Pro v1.3.5</title>
     <style>
         :root {
             --sidebar-w: 260px; --brand: #2563eb; --bg-app: #f8fafc;
@@ -25,14 +25,17 @@
         
         body { margin: 0; font-family: 'Inter', sans-serif; background: var(--bg-app); color: var(--text-main); display: flex; min-height: 100vh; overflow-x: hidden; }
         
+        /* Sidebar explicitly starts hidden off-screen */
         aside { 
             width: var(--sidebar-w); min-width: var(--sidebar-w); background: var(--card-bg); border-right: 1px solid var(--border); 
             padding: 16px; display: flex; flex-direction: column; height: 100vh; 
             position: fixed; left: 0; top: 0; z-index: 2000;
-            transition: transform 0.3s ease; transform: translateX(-100%);
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); 
+            transform: translateX(-100%);
             box-sizing: border-box;
+            visibility: hidden; /* Extra safety to prevent flash on load */
         }
-        aside.open { transform: translateX(0); }
+        aside.open { transform: translateX(0); visibility: visible; }
         
         .main-content { 
             flex: 1; display: flex; flex-direction: column; width: 100vw; 
@@ -62,6 +65,13 @@
         table { width: 100%; border-collapse: collapse; font-size: 13px; }
         th, td { text-align: left; padding: 12px; border-bottom: 1px solid var(--border); }
         .num { font-family: monospace; text-align: right; font-weight: 700; color: var(--brand); }
+        
+        .over-budget-row { background: rgba(239, 68, 68, 0.05); }
+        .over-budget-row .num { color: var(--danger) !important; }
+        
+        #budgetLimit { color: var(--success); transition: color 0.2s; }
+        #budgetLimit.danger { color: var(--danger); }
+
         .why-tag { font-size: 10px; color: var(--brand); background: var(--accent-bg); padding: 4px 8px; border-radius: 4px; display: block; margin-top: 4px; border-left: 3px solid var(--brand); font-weight: bold; }
 
         .btn { padding: 8px 12px; border-radius: 6px; border: 1px solid var(--border); background: var(--card-bg); cursor: pointer; font-size: 13px; display: inline-flex; align-items: center; gap: 6px; color: var(--text-main); font-weight: 500; }
@@ -98,7 +108,7 @@
                 <div class="glass-card" style="margin:0;"><small>TOKENS</small><div id="in-count" style="font-size:20px; font-weight:700;">0</div></div>
                 <div class="glass-card" style="margin:0;"><small>PEAK COST</small><div id="peak-val" style="font-size:20px; font-weight:700; color:var(--brand);">$0.00</div></div>
                 <div class="glass-card" style="margin:0;"><small>BUDGET</small>
-                    <input type="number" id="budgetLimit" style="width:100%; border:none; background:transparent; font-size:20px; font-weight:700; color:var(--danger); outline:none;" step="0.01" value="0.10" oninput="calculate()">
+                    <input type="number" id="budgetLimit" style="width:100%; border:none; background:transparent; font-size:20px; font-weight:700; outline:none;" step="0.001" value="0.01" oninput="calculate()">
                 </div>
             </div>
 
@@ -178,12 +188,19 @@
         let peak = 0;
         let html = filtered.map(m => {
             if (m.cost > peak) peak = m.cost;
-            const isOver = m.cost > (budget * rate);
-            return `<tr class="${isOver ? 'over-budget' : ''}">
+            const isOver = m.cost > budget;
+            return `<tr class="${isOver ? 'over-budget-row' : ''}">
                 <td><b>${m.name}</b><span class="why-tag">💡 ${m.why}</span></td>
-                <td class="num" style="color:${isOver ? 'var(--danger)' : 'var(--brand)'}">${sym}${m.cost.toFixed(6)}</td>
+                <td class="num">${sym}${m.cost.toFixed(6)}</td>
             </tr>`;
         }).join('');
+
+        const budgetInput = document.getElementById('budgetLimit');
+        if (peak > budget) {
+            budgetInput.classList.add('danger');
+        } else {
+            budgetInput.classList.remove('danger');
+        }
 
         document.getElementById('table-body').innerHTML = html;
         document.getElementById('peak-val').innerText = sym + peak.toFixed(4);
@@ -233,7 +250,6 @@
         const curr = document.getElementById('curr').value;
         const rate = curr === 'INR' ? 83.5 : 1;
 
-        // UPDATED: Now excludes 'id' and only keeps index + content
         const formatSimplifiedDetails = (tokens) => tokens.map((t, i) => ({
             index: i + 1,
             content: GPTTokenizer_cl100k_base.decode([t])
@@ -242,28 +258,16 @@
         let exportData = {
             timestamp: new Date().toISOString(),
             currency: curr,
-            summary: {
-                final_token_count: currentTokens.length,
-                peak_cost: document.getElementById('peak-val').innerText
-            }
+            summary: { final_token_count: currentTokens.length, peak_cost: document.getElementById('peak-val').innerText }
         };
 
         if (lastOptimizedData) {
             exportData.optimization_report = {
-                before: {
-                    count: lastOptimizedData.before.tokens.length,
-                    details: formatSimplifiedDetails(lastOptimizedData.before.tokens)
-                },
-                after: {
-                    count: lastOptimizedData.after.tokens.length,
-                    details: formatSimplifiedDetails(lastOptimizedData.after.tokens)
-                }
+                before: { count: lastOptimizedData.before.tokens.length, details: formatSimplifiedDetails(lastOptimizedData.before.tokens) },
+                after: { count: lastOptimizedData.after.tokens.length, details: formatSimplifiedDetails(lastOptimizedData.after.tokens) }
             };
         } else {
-            exportData.data = {
-                count: currentTokens.length,
-                details: formatSimplifiedDetails(currentTokens)
-            };
+            exportData.data = { count: currentTokens.length, details: formatSimplifiedDetails(currentTokens) };
         }
 
         exportData.model_audit = models.map(m => ({
