@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Token Calculator Pro v1.2.8</title>
+    <title>Token Calculator Pro v1.3.1</title>
     <style>
         :root {
             --sidebar-w: 260px; --brand: #2563eb; --bg-app: #f8fafc;
@@ -23,7 +23,6 @@
             }
         }
         
-        /* Mobile Scroll Fix: Changed overflow-hidden to allow scrolling on body/main */
         body { margin: 0; font-family: 'Inter', sans-serif; background: var(--bg-app); color: var(--text-main); display: flex; min-height: 100vh; overflow-x: hidden; }
         
         aside { 
@@ -38,13 +37,12 @@
         .main-content { 
             flex: 1; display: flex; flex-direction: column; width: 100vw; 
             transition: margin-left 0.3s ease, width 0.3s ease; margin-left: 0;
-            min-height: 100vh; overflow-y: auto; /* Enable vertical scroll */
+            min-height: 100vh; overflow-y: auto;
             -webkit-overflow-scrolling: touch;
         }
 
         @media (min-width: 1025px) {
             aside.open ~ .main-content { margin-left: var(--sidebar-w); width: calc(100vw - var(--sidebar-w)); }
-            aside.open { transform: translateX(0); }
         }
 
         header { height: 60px; background: var(--card-bg); border-bottom: 1px solid var(--border); display: flex; align-items: center; padding: 0 20px; flex-shrink: 0; position: sticky; top: 0; z-index: 100; }
@@ -73,7 +71,7 @@
 </head>
 <body>
 
-<aside id="sidebar" class="open">
+<aside id="sidebar">
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
         <h3 style="color:var(--brand); margin:0;">Token Calc</h3>
         <button onclick="toggleMenu()" style="background:none; border:none; cursor:pointer; font-size:20px;">✕</button>
@@ -146,7 +144,7 @@
 <script src="https://unpkg.com/gpt-tokenizer/dist/cl100k_base.js"></script>
 <script>
     let models = [];
-    let lastOptimized = null;
+    let lastOptimizedData = null; 
     let exIdx = 0;
     const examples = [
         "Please write a very long report about why cats are actually secretly in charge of the world.",
@@ -189,7 +187,7 @@
 
         document.getElementById('table-body').innerHTML = html;
         document.getElementById('peak-val').innerText = sym + peak.toFixed(4);
-        if(!lastOptimized) renderTokens(tokens, "viz-content");
+        if(!lastOptimizedData) renderTokens(tokens, "viz-content");
     }
 
     function renderTokens(tokens, containerId) {
@@ -209,6 +207,12 @@
         input.value = optimized;
         const oldT = GPTTokenizer_cl100k_base.encode(original);
         const newT = GPTTokenizer_cl100k_base.encode(optimized);
+        
+        lastOptimizedData = { 
+            before: { text: original, tokens: oldT }, 
+            after: { text: optimized, tokens: newT } 
+        };
+
         document.getElementById('viz').innerHTML = `
             <div style="font-size:10px; font-weight:bold; color:var(--danger); border-bottom:1px solid var(--border); padding-bottom:4px; text-transform:uppercase;">Before Optimization (${oldT.length} Tokens)</div>
             <div id="v-old" class="viz-sub"></div>
@@ -216,34 +220,59 @@
             <div id="v-new" class="viz-sub"></div>
         `;
         renderTokens(oldT, 'v-old'); renderTokens(newT, 'v-new');
-        lastOptimized = true; calculate();
+        calculate();
     }
 
     function jokeExample() { resetViz(); document.getElementById('input').value = examples[exIdx]; exIdx = (exIdx + 1) % examples.length; calculate(); }
     function clearEditor() { resetViz(); document.getElementById('input').value = ''; calculate(); }
-    function resetViz() { lastOptimized = null; document.getElementById('viz').innerHTML = '<div id="viz-content" class="viz-sub"><small>Tokenization preview...</small></div>'; }
+    function resetViz() { lastOptimizedData = null; document.getElementById('viz').innerHTML = '<div id="viz-content" class="viz-sub"><small>Tokenization preview...</small></div>'; }
 
-    /* Enhanced Download logic to include all details */
     function downloadData() {
-        const text = document.getElementById('input').value;
-        const tokens = GPTTokenizer_cl100k_base.encode(text);
+        const currentText = document.getElementById('input').value;
+        const currentTokens = GPTTokenizer_cl100k_base.encode(currentText);
         const curr = document.getElementById('curr').value;
         const rate = curr === 'INR' ? 83.5 : 1;
-        
-        const data = { 
-            timestamp: new Date().toISOString(), 
-            prompt: text, 
-            token_count: tokens.length, 
-            token_ids: tokens,
+
+        // UPDATED: Now excludes 'id' and only keeps index + content
+        const formatSimplifiedDetails = (tokens) => tokens.map((t, i) => ({
+            index: i + 1,
+            content: GPTTokenizer_cl100k_base.decode([t])
+        }));
+
+        let exportData = {
+            timestamp: new Date().toISOString(),
             currency: curr,
-            model_costs: models.map(m => ({
-                model: m.name,
-                unit_price_per_m: m.input,
-                calculated_cost: ((tokens.length / 1000000) * m.input * rate).toFixed(6)
-            }))
+            summary: {
+                final_token_count: currentTokens.length,
+                peak_cost: document.getElementById('peak-val').innerText
+            }
         };
-        const blob = new Blob([JSON.stringify(data, null, 2)], {type: 'application/json'});
-        const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `token-audit-${Date.now()}.json`; a.click();
+
+        if (lastOptimizedData) {
+            exportData.optimization_report = {
+                before: {
+                    count: lastOptimizedData.before.tokens.length,
+                    details: formatSimplifiedDetails(lastOptimizedData.before.tokens)
+                },
+                after: {
+                    count: lastOptimizedData.after.tokens.length,
+                    details: formatSimplifiedDetails(lastOptimizedData.after.tokens)
+                }
+            };
+        } else {
+            exportData.data = {
+                count: currentTokens.length,
+                details: formatSimplifiedDetails(currentTokens)
+            };
+        }
+
+        exportData.model_audit = models.map(m => ({
+            model: m.name,
+            cost: ((currentTokens.length / 1000000) * m.input * rate).toFixed(6)
+        }));
+
+        const blob = new Blob([JSON.stringify(exportData, null, 2)], {type: 'application/json'});
+        const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `audit-report-${Date.now()}.json`; a.click();
     }
 
     function saveToHistory() {
@@ -256,7 +285,7 @@
 
     function renderHistory() {
         const h = JSON.parse(localStorage.getItem('h') || '[]');
-        document.getElementById('history-list').innerHTML = h.map(i => `<div style="padding:10px; border-bottom:1px solid var(--border); cursor:pointer;" onclick="document.getElementById('input').value=\`${i.t.replace(/`/g, '\\`')}\`;resetViz();calculate()">${i.d}: ${i.t.substring(0,25)}...</div>`).join('') || 'No history';
+        document.getElementById('history-list').innerHTML = h.map(i => `<div style="padding:10px; border-bottom:1px solid var(--border); cursor:pointer;" onclick="document.getElementById('input').value=\`${i.t.replace(/`/g, '\\`')}\`;resetViz();calculate();toggleMenu()">${i.d}: ${i.t.substring(0,25)}...</div>`).join('') || 'No history';
     }
 
     function clearHistory() { localStorage.removeItem('h'); renderHistory(); }
