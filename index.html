@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Token Calculator Pro v1.2.4</title>
+    <title>Token Calculator Pro v1.2.7</title>
     <style>
         :root {
             --sidebar-w: 260px; --brand: #2563eb; --bg-app: #f8fafc;
@@ -17,8 +17,8 @@
             :root { 
                 --bg-app: #0f172a; --card-bg: #1e293b; --text-main: #f1f5f9; 
                 --text-muted: #94a3b8; --border: #334155; --accent-bg: #1e293b; 
-                --t1: rgba(59, 130, 246, 0.35); --t2: rgba(245, 158, 11, 0.35); 
-                --t3: rgba(16, 185, 129, 0.35); --t4: rgba(139, 92, 246, 0.35);
+                --t1: rgba(59, 130, 246, 0.3); --t2: rgba(245, 158, 11, 0.3); 
+                --t3: rgba(16, 185, 129, 0.3); --t4: rgba(139, 92, 246, 0.3);
                 --token-text: #ffffff;
             }
         }
@@ -54,16 +54,16 @@
         textarea { width: 100%; min-height: 200px; padding: 15px; border-radius: 10px; border: 1px solid var(--border); background: var(--bg-app); color: var(--text-main); font-size: 14px; outline: none; box-sizing: border-box; resize: vertical; }
         
         .viz-sub { display: flex; flex-wrap: wrap; gap: 4px; padding-top: 10px; }
-        .token-group { display: inline-flex; flex-direction: column; align-items: center; }
-        .token-idx { font-size: 8px; color: var(--text-muted); font-family: monospace; font-weight: bold; }
-        .token-span { padding: 2px 5px; border-radius: 4px; font-family: monospace; font-size: 11px; white-space: pre-wrap; color: var(--token-text); border: 1px solid rgba(128,128,128,0.1); }
+        .token-group { display: inline-flex; flex-direction: column; align-items: center; margin: 2px; }
+        .token-idx { font-size: 10px; color: var(--brand); font-family: monospace; font-weight: bold; margin-bottom: 2px; }
+        .token-span { padding: 3px 6px; border-radius: 4px; font-family: monospace; font-size: 12px; white-space: pre-wrap; color: var(--token-text); border: 1px solid rgba(128,128,128,0.1); }
         
         table { width: 100%; border-collapse: collapse; font-size: 13px; }
         th, td { text-align: left; padding: 12px; border-bottom: 1px solid var(--border); }
         .num { font-family: monospace; text-align: right; font-weight: 700; color: var(--brand); }
-        .over-budget { background-color: rgba(239, 68, 68, 0.08) !important; color: var(--danger) !important; }
+        .why-tag { font-size: 10px; color: var(--brand); background: var(--accent-bg); padding: 4px 8px; border-radius: 4px; display: block; margin-top: 4px; border-left: 3px solid var(--brand); font-weight: bold; }
 
-        .btn { padding: 8px 12px; border-radius: 6px; border: 1px solid var(--border); background: var(--card-bg); cursor: pointer; font-size: 13px; display: inline-flex; align-items: center; gap: 6px; color: var(--text-main); }
+        .btn { padding: 8px 12px; border-radius: 6px; border: 1px solid var(--border); background: var(--card-bg); cursor: pointer; font-size: 13px; display: inline-flex; align-items: center; gap: 6px; color: var(--text-main); font-weight: 500; }
         .btn-success { background: var(--success); color: white; border: none; }
         .btn-primary { background: var(--brand); color: white; border: none; }
     </style>
@@ -101,7 +101,7 @@
                 </div>
             </div>
 
-            <textarea id="input" placeholder="Enter prompt..." oninput="calculate()"></textarea>
+            <textarea id="input" placeholder="Type prompt here..." oninput="calculate()"></textarea>
             
             <div style="display:flex; gap:8px; margin: 10px 0;">
                 <button class="btn btn-success" onclick="optimizePrompt()">⚡ Optimize</button>
@@ -111,15 +111,19 @@
 
             <div id="viz" class="glass-card">
                 <div id="viz-content" class="viz-sub">
-                    <small style="color:var(--text-muted)">Visualizer...</small>
+                    <small style="color:var(--text-muted)">Tokenization preview...</small>
                 </div>
             </div>
         </div>
 
         <div class="right-panel">
             <div class="glass-card">
-                <div style="display:flex; gap:10px; margin-bottom:15px;">
-                    <input type="text" id="modelSearch" class="btn" style="flex:1;" placeholder="🔍 Filter..." oninput="calculate()">
+                <div style="display:flex; gap:10px; margin-bottom:15px; flex-wrap: wrap;">
+                    <input type="text" id="modelSearch" class="btn" style="flex:1; min-width: 120px;" placeholder="🔍 Filter..." oninput="calculate()">
+                    <select id="sortOrder" class="btn" onchange="calculate()">
+                        <option value="asc">Price: Low to High</option>
+                        <option value="desc">Price: High to Low</option>
+                    </select>
                     <select id="curr" class="btn" onchange="calculate()">
                         <option value="USD" selected>$ USD</option>
                         <option value="INR">₹ INR</option>
@@ -127,7 +131,7 @@
                 </div>
                 <div style="overflow-x:auto;">
                     <table>
-                        <thead><tr><th>Model</th><th class="num">In Cost</th></tr></thead>
+                        <thead><tr><th>Model & Strategy</th><th class="num">In Cost</th></tr></thead>
                         <tbody id="table-body"></tbody>
                     </table>
                 </div>
@@ -156,19 +160,27 @@
         const rate = document.getElementById('curr').value === 'INR' ? 83.5 : 1;
         const sym = document.getElementById('curr').value === 'INR' ? '₹' : '$';
         const search = document.getElementById('modelSearch').value.toLowerCase();
+        const sort = document.getElementById('sortOrder').value;
         const budget = parseFloat(document.getElementById('budgetLimit').value) || 0;
 
         const tokens = text ? GPTTokenizer_cl100k_base.encode(text) : [];
         document.getElementById('in-count').innerText = tokens.length.toLocaleString();
 
+        let filtered = models.filter(m => m.name.toLowerCase().includes(search) || m.why.toLowerCase().includes(search))
+            .map(m => {
+                const cost = (tokens.length / 1000000) * m.input * rate;
+                return { ...m, cost };
+            });
+
+        filtered.sort((a,b) => sort === 'desc' ? b.cost - a.cost : a.cost - b.cost);
+
         let peak = 0;
-        let html = models.filter(m => m.name.toLowerCase().includes(search) || m.why.toLowerCase().includes(search)).map(m => {
-            const cost = (tokens.length / 1000000) * m.input * rate;
-            if (cost > peak) peak = cost;
-            const isOver = cost > (budget * rate);
+        let html = filtered.map(m => {
+            if (m.cost > peak) peak = m.cost;
+            const isOver = m.cost > (budget * rate);
             return `<tr class="${isOver ? 'over-budget' : ''}">
-                <td><b>${m.name}</b><br><small style="color:var(--brand)">${m.why}</small></td>
-                <td class="num" style="color:${isOver ? 'var(--danger)' : 'var(--brand)'}">${sym}${cost.toFixed(6)}</td>
+                <td><b>${m.name}</b><span class="why-tag">💡 ${m.why}</span></td>
+                <td class="num" style="color:${isOver ? 'var(--danger)' : 'var(--brand)'}">${sym}${m.cost.toFixed(6)}</td>
             </tr>`;
         }).join('');
 
@@ -179,10 +191,11 @@
 
     function renderTokens(tokens, containerId) {
         const container = document.getElementById(containerId);
-        container.innerHTML = tokens.length ? '' : '<small>Visualizer...</small>';
+        container.innerHTML = tokens.length ? '' : '<small>Tokenization preview...</small>';
         tokens.slice(0, 100).forEach((t, i) => {
             const g = document.createElement('div'); g.className = 'token-group';
-            g.innerHTML = `<span class="token-idx">${t}</span><span class="token-span" style="background:var(--t${(i%4)+1})">${GPTTokenizer_cl100k_base.decode([t])}</span>`;
+            // UPDATED: Now shows sequential numbering (1, 2, 3...)
+            g.innerHTML = `<span class="token-idx">${i + 1}</span><span class="token-span" style="background:var(--t${(i%4)+1})">${GPTTokenizer_cl100k_base.decode([t])}</span>`;
             container.appendChild(g);
         });
     }
@@ -194,11 +207,10 @@
         input.value = optimized;
         const oldT = GPTTokenizer_cl100k_base.encode(original);
         const newT = GPTTokenizer_cl100k_base.encode(optimized);
-        const viz = document.getElementById('viz');
-        viz.innerHTML = `
-            <div style="font-size:10px; font-weight:bold; color:var(--danger)">BEFORE (${oldT.length})</div>
+        document.getElementById('viz').innerHTML = `
+            <div style="font-size:10px; font-weight:bold; color:var(--danger); border-bottom:1px solid var(--border); padding-bottom:4px; text-transform:uppercase;">Before Optimization (${oldT.length} Tokens)</div>
             <div id="v-old" class="viz-sub"></div>
-            <div style="font-size:10px; font-weight:bold; color:var(--success); margin-top:10px;">AFTER (${newT.length})</div>
+            <div style="font-size:10px; font-weight:bold; color:var(--success); margin-top:12px; border-bottom:1px solid var(--border); padding-bottom:4px; text-transform:uppercase;">After Optimization (${newT.length} Tokens)</div>
             <div id="v-new" class="viz-sub"></div>
         `;
         renderTokens(oldT, 'v-old'); renderTokens(newT, 'v-new');
@@ -207,7 +219,7 @@
 
     function jokeExample() { resetViz(); document.getElementById('input').value = examples[exIdx]; exIdx = (exIdx + 1) % examples.length; calculate(); }
     function clearEditor() { resetViz(); document.getElementById('input').value = ''; calculate(); }
-    function resetViz() { lastOptimized = null; document.getElementById('viz').innerHTML = '<div id="viz-content" class="viz-sub"><small>Visualizer...</small></div>'; }
+    function resetViz() { lastOptimized = null; document.getElementById('viz').innerHTML = '<div id="viz-content" class="viz-sub"><small>Tokenization preview...</small></div>'; }
 
     function downloadData() {
         const text = document.getElementById('input').value;
