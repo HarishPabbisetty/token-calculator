@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Token Calculator Pro - 2026 Strategy Edition</title>
+    <title>Token Calculator Pro v1.2</title>
     <style>
         :root {
             --sidebar-w: 240px; --brand: #2563eb; --bg-app: #f8fafc;
@@ -17,7 +17,9 @@
             :root { 
                 --bg-app: #0f172a; --card-bg: #1e293b; --text-main: #f1f5f9; 
                 --text-muted: #94a3b8; --border: #334155; --accent-bg: #1e293b;
-                --t1: #1e3a8a; --t2: #78350f; --t3: #064e3b; --t4: #581c87;
+                /* High-contrast token backgrounds for dark mode */
+                --t1: rgba(59, 130, 246, 0.3); --t2: rgba(245, 158, 11, 0.3); 
+                --t3: rgba(16, 185, 129, 0.3); --t4: rgba(139, 92, 246, 0.3);
                 --token-text: #ffffff;
             }
         }
@@ -26,54 +28,59 @@
         
         aside { 
             width: var(--sidebar-w); min-width: var(--sidebar-w); background: var(--card-bg); border-right: 1px solid var(--border); 
-            padding: 16px; display: flex; flex-direction: column; height: 100vh; position: fixed; left: 0; top: 0; z-index: 2000;
-            transform: translateX(-100%); transition: transform 0.3s ease; box-sizing: border-box;
+            padding: 16px; display: flex; flex-direction: column; height: 100vh; 
+            position: fixed; left: 0; top: 0; z-index: 2000;
+            transform: translateX(-100%); transition: transform 0.3s ease;
+            box-sizing: border-box;
         }
         aside.open { transform: translateX(0); }
         #overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 1500; backdrop-filter: blur(2px); }
 
-        .sidebar-header { color: var(--brand); margin: 0 0 15px 0; font-size: 20px; font-weight: 700; }
-        .sidebar-controls { display: flex; flex-direction: column; gap: 8px; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 1px solid var(--border); }
-        #history-list { flex: 1; overflow-y: auto; font-size: 11px; }
+        /* Sidebar UI Restructure */
+        .sidebar-actions { display: flex; flex-direction: column; gap: 8px; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 1px solid var(--border); }
+        .sidebar-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; }
 
         .main-content { flex: 1; display: flex; flex-direction: column; width: 100%; margin-left: 0; transition: margin 0.3s; }
         header { height: 60px; background: var(--card-bg); border-bottom: 1px solid var(--border); display: flex; align-items: center; padding: 0 20px; position: sticky; top: 0; z-index: 100; }
         .menu-btn { background: none; border: none; font-size: 24px; cursor: pointer; color: var(--text-main); margin-right: 15px; }
 
         .split-container { 
-            display: grid; grid-template-columns: 1.2fr 1.1fr; gap: 20px; padding: 20px; height: calc(100vh - 80px);
+            display: grid; grid-template-columns: 1.2fr 1.1fr; gap: 20px; 
+            padding: 20px; height: calc(100vh - 80px);
             max-width: 1600px; margin: 0 auto; width: 100%; box-sizing: border-box;
         }
 
-        @media (max-width: 1024px) { .split-container { grid-template-columns: 1fr; height: auto; } .main-content { margin-left: 0 !important; } }
-        @media (min-width: 1025px) { aside { transform: translateX(0); } .main-content { margin-left: var(--sidebar-w); } .menu-btn { display: none; } }
+        .left-panel, .right-panel { display: flex; flex-direction: column; gap: 15px; overflow-y: auto; padding-bottom: 40px; }
+        .left-panel::-webkit-scrollbar, .right-panel::-webkit-scrollbar { width: 0px; }
 
-        .left-panel, .right-panel { display: flex; flex-direction: column; gap: 15px; padding-bottom: 20px; }
         .glass-card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 10px; padding: 16px; box-sizing: border-box; }
-        textarea { width: 100%; min-height: 180px; padding: 15px; border-radius: 10px; border: 1px solid var(--border); background: var(--bg-app); color: var(--text-main); font-size: 14px; resize: vertical; outline: none; box-sizing: border-box;}
+        textarea { width: 100%; min-height: 180px; padding: 15px; border-radius: 10px; border: 1px solid var(--border); background: var(--bg-app); color: var(--text-main); font-size: 14px; resize: vertical; outline: none; }
         
-        .stats-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap: 12px; }
-        .viz-sub { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 15px; }
-        .viz-label { font-size: 10px; font-weight: bold; color: var(--brand); text-transform: uppercase; width: 100%; margin-bottom: 5px; border-bottom: 1px solid var(--border); padding-bottom: 4px;}
+        .stats-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
         
-        /* TOKEN STYLING WITH NUMBERS */
-        .token-block { display: flex; flex-direction: column; align-items: center; }
+        #viz { min-height: 120px; height: auto; }
+        .viz-sub { display: flex; flex-wrap: wrap; align-content: flex-start; margin-bottom: 15px; }
+        .viz-label { font-size: 10px; font-weight: bold; color: var(--brand); text-transform: uppercase; width: 100%; margin-bottom: 8px; border-bottom: 1px solid var(--border); padding-bottom: 4px;}
+        
+        .token-group { display: inline-flex; flex-direction: column; align-items: center; margin: 2px; }
+        .token-idx { font-size: 8px; color: var(--text-muted); font-family: monospace; }
         .token-span { 
-            padding: 2px 6px; border-radius: 4px; font-family: monospace; font-size: 12px; 
-            white-space: pre; color: var(--token-text); border: 1px solid rgba(255,255,255,0.1);
+            padding: 2px 4px; border-radius: 4px; font-family: monospace; font-size: 11px; 
+            white-space: pre; color: var(--token-text); border: 1px solid rgba(128,128,128,0.1);
         }
-        .token-id { font-size: 9px; color: var(--text-muted); font-family: monospace; margin-top: 2px; }
         
         table { width: 100%; border-collapse: collapse; font-size: 13px; }
-        th { text-align: left; padding: 12px; border-bottom: 1px solid var(--border); cursor: pointer; user-select: none; }
-        th:hover { color: var(--brand); }
-        td { padding: 12px; border-bottom: 1px solid var(--border); }
+        th, td { text-align: left; padding: 12px; border-bottom: 1px solid var(--border); }
         .num { font-family: monospace; text-align: right; font-weight: 700; }
-        .over-budget { background-color: rgba(239, 68, 68, 0.1) !important; color: var(--danger) !important; }
+        .over-budget { background-color: rgba(239, 68, 68, 0.08) !important; color: var(--danger) !important; }
+        .why-tag { font-size: 10px; color: var(--brand); background: var(--accent-bg); padding: 4px 8px; border-radius: 4px; display: block; margin-top: 4px; font-weight: bold; border-left: 3px solid var(--brand); }
 
         .btn { padding: 8px 12px; border-radius: 6px; border: 1px solid var(--border); background: var(--card-bg); cursor: pointer; font-size: 13px; font-weight: 500; display: inline-flex; align-items: center; gap: 6px; color: var(--text-main); }
         .btn-success { background: var(--success); color: white; border: none; }
         .btn-primary { background: var(--brand); color: white; border: none; }
+
+        @media (max-width: 1024px) { .split-container { grid-template-columns: 1fr; height: auto; } }
+        @media (min-width: 1025px) { aside { transform: translateX(0); } .main-content { margin-left: var(--sidebar-w); } .menu-btn { display: none; } }
     </style>
 </head>
 <body>
@@ -81,20 +88,25 @@
 <div id="overlay" onclick="toggleMenu()"></div>
 
 <aside id="sidebar">
-    <div class="sidebar-header">Token Calculator</div>
-    <div class="sidebar-controls">
-        <button class="btn btn-primary" onclick="downloadData()">📥 Download Json </button>
-        <button class="btn btn-success" onclick="saveToHistory()">💾 Cache Prompt</button>
+    <div class="sidebar-header">
+        <h3 style="color:var(--brand); margin:0;">Token Calc</h3>
+        <button class="menu-btn" onclick="toggleMenu()" style="font-size: 18px;">✕</button>
+    </div>
+
+    <div class="sidebar-actions">
+        <button class="btn btn-primary" onclick="downloadData()">📥 Download JSON</button>
+        <button class="btn btn-success" onclick="saveToHistory()">💾 Cache Request</button>
         <button class="btn" onclick="clearHistory()" style="color:var(--danger)">🗑 Clear History</button>
     </div>
-    <small style="color:var(--text-muted); margin-bottom: 10px; font-weight: bold;">RECENT HISTORY</small>
-    <div id="history-list"></div>
+
+    <small style="color:var(--text-muted); font-weight:bold; text-transform:uppercase; margin-bottom:8px;">History</small>
+    <div id="history-list" style="flex:1; overflow-y:auto; font-size:11px;"></div>
 </aside>
 
 <div class="main-content">
     <header>
         <button class="menu-btn" onclick="toggleMenu()">☰</button>
-        <h2 style="font-size: 18px; margin: 0;">Calculator Engine</h2>
+        <h2 style="font-size: 18px; margin: 0;">2026 Strategy Engine</h2>
     </header>
 
     <div class="split-container">
@@ -102,39 +114,50 @@
             <div class="stats-row">
                 <div class="glass-card"><small>TOKENS</small><div id="in-count" style="font-size:18px; font-weight:700;">0</div></div>
                 <div class="glass-card"><small>PEAK COST</small><div id="peak-val" style="font-size:18px; font-weight:700; color:var(--brand);">$0.0000</div></div>
-                <div class="glass-card"><small>BUDGET</small><input type="number" id="budgetLimit" style="width:100%; border:none; background:transparent; font-size:18px; font-weight:700; color:var(--danger); outline:none;" step="0.01" value="0.10" oninput="calculate()"></div>
+                <div class="glass-card"><small>BUDGET</small>
+                    <input type="number" id="budgetLimit" style="width:100%; border:none; background:transparent; font-size:18px; font-weight:700; color:var(--danger); outline:none;" step="0.01" value="0.10" oninput="calculate()">
+                </div>
             </div>
 
-            <textarea id="input" placeholder="Enter text here..." oninput="calculate()">Example: Please actually explain how very simply AI works exactly!</textarea>
+            <textarea id="input" placeholder="Type prompt here..." oninput="calculate()"></textarea>
             
-            <div style="display:flex; gap:8px;">
-                <button class="btn btn-success" onclick="optimizePrompt()">⚡ Optimize</button>
+            <div style="display:flex; gap:8px; flex-wrap: wrap;">
+                <button class="btn btn-success" onclick="optimizePrompt()">⚡ Optimize Prompt</button>
+                <button class="btn" onclick="jokeExample()">🎭 Example</button>
                 <button class="btn" onclick="clearEditor()">Clear</button>
             </div>
 
             <div id="viz" class="glass-card">
-                <div id="viz-content"><small style="color:var(--text-muted)">Tokenization preview...</small></div>
+                <div id="viz-content">
+                    <small style="color:var(--text-muted)">Tokenization preview...</small>
+                </div>
             </div>
         </div>
 
         <div class="right-panel">
-            <div class="glass-card" style="flex:1;">
-                <div style="display:flex; gap:10px; margin-bottom:15px;">
-                    <input type="text" id="modelSearch" class="btn" style="flex:1;" placeholder="🔍 Filter models..." oninput="calculate()">
+            <div class="glass-card" style="flex:1; display:flex; flex-direction:column;">
+                <div style="display:flex; gap:10px; margin-bottom:15px; flex-wrap: wrap;">
+                    <input type="text" id="modelSearch" class="btn" style="flex:1; min-width:130px;" placeholder="🔍 Filter models..." oninput="calculate()">
+                    <select id="sortOrder" class="btn" onchange="calculate()">
+                        <option value="asc">Low to High</option>
+                        <option value="desc">High to Low</option>
+                    </select>
                     <select id="curr" class="btn" onchange="calculate()">
-                        <option value="USD">$ USD</option>
+                        <option value="USD" selected>$ USD</option>
                         <option value="INR">₹ INR</option>
                     </select>
                 </div>
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Model Strategy</th>
-                            <th class="num" id="sort-cost" onclick="toggleSort()">In Cost ↕</th>
-                        </tr>
-                    </thead>
-                    <tbody id="table-body"></tbody>
-                </table>
+                <div style="overflow-y:auto;">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Model & Strategy</th>
+                                <th class="num">In Cost</th>
+                            </tr>
+                        </thead>
+                        <tbody id="table-body"></tbody>
+                    </table>
+                </div>
             </div>
         </div>
     </div>
@@ -143,124 +166,141 @@
 <script src="https://unpkg.com/gpt-tokenizer/dist/cl100k_base.js"></script>
 <script>
     let models = []; 
-    let lastOptimized = false;
-    let sortAsc = true;
+    let lastOptimized = null;
+    let originalPrompt = ""; // Track original before optimization
+    const examples = [
+        "Please write a very long report about why cats are actually secretly in charge of the world.",
+        "Can you actually explain in order to help me understand very clearly why the moon appears white?",
+        "I would like you to please describe exactly how a steam engine functions very simply."
+    ];
+    let exIdx = 0;
 
-    function toggleMenu() { 
-        const sb = document.getElementById('sidebar');
-        const ov = document.getElementById('overlay');
-        sb.classList.toggle('open');
-        ov.style.display = sb.classList.contains('open') ? 'block' : 'none';
-    }
+    function toggleMenu() { document.getElementById('sidebar').classList.toggle('open'); }
 
-    fetch('models.json').then(res => res.json()).then(data => { models = data; calculate(); });
-
-    function toggleSort() {
-        sortAsc = !sortAsc;
-        calculate();
-    }
+    fetch('models.json')
+        .then(res => res.json())
+        .then(data => { models = data; calculate(); })
+        .catch(() => { document.getElementById('table-body').innerHTML = '<tr><td colspan="2">Error loading models.json</td></tr>'; });
 
     function calculate() {
         const text = document.getElementById('input').value;
+        const search = document.getElementById('modelSearch').value.toLowerCase();
+        const sort = document.getElementById('sortOrder').value;
         const budget = parseFloat(document.getElementById('budgetLimit').value) || 0;
         const rate = document.getElementById('curr').value === 'INR' ? 83.5 : 1;
         const sym = document.getElementById('curr').value === 'INR' ? '₹' : '$';
-        const search = document.getElementById('modelSearch').value.toLowerCase();
 
         const tokens = text ? GPTTokenizer_cl100k_base.encode(text) : [];
-        document.getElementById('in-count').innerText = tokens.length;
+        document.getElementById('in-count').innerText = tokens.length.toLocaleString();
 
-        // Sorting & Filtering
-        let displayModels = models.filter(m => m.name.toLowerCase().includes(search));
-        displayModels.sort((a, b) => {
-            const costA = (tokens.length / 1000000) * a.input;
-            const costB = (tokens.length / 1000000) * b.input;
-            return sortAsc ? costA - costB : costB - costA;
-        });
+        let filtered = models.filter(m => m.name.toLowerCase().includes(search) || m.why.toLowerCase().includes(search))
+            .map(m => {
+                const cost = (tokens.length / 1000000) * m.input * rate;
+                return { ...m, cost };
+            });
+
+        filtered.sort((a,b) => sort === 'desc' ? b.cost - a.cost : a.cost - b.cost);
 
         let peak = 0;
-        let html = displayModels.map(m => {
-            const cost = (tokens.length / 1000000) * m.input * rate;
-            if(cost > peak) peak = cost;
-            const over = cost > (budget * rate);
-            return `<tr class="${over ? 'over-budget' : ''}"><td><b>${m.name}</b><br><small style="color:var(--text-muted)">${m.strategy}</small></td><td class="num" style="color:${over?'var(--danger)':'var(--brand)'}">${sym}${cost.toFixed(6)}</td></tr>`;
+        let html = filtered.map(m => {
+            if (m.cost > peak) peak = m.cost;
+            const isOver = m.cost > (budget * rate);
+            return `<tr class="${isOver ? 'over-budget' : ''}">
+                <td><b>${m.name}</b><span class="why-tag">💡 ${m.why}</span></td>
+                <td class="num" style="color:${isOver ? 'var(--danger)' : 'var(--brand)'}">${sym}${m.cost.toFixed(6)}</td>
+            </tr>`;
         }).join('');
-        
+
         document.getElementById('table-body').innerHTML = html;
-        document.getElementById('peak-val').innerText = sym + (peak / rate).toFixed(4);
-        if (!lastOptimized) renderTokens(tokens, "viz-content");
+        document.getElementById('peak-val').innerText = sym + peak.toFixed(4);
+        
+        if (!lastOptimized) {
+            renderTokens(tokens, "viz-content");
+        }
+    }
+
+    function optimizePrompt() {
+        const input = document.getElementById('input');
+        if(!input.value) return;
+        
+        originalPrompt = input.value;
+        const oldTokens = GPTTokenizer_cl100k_base.encode(originalPrompt);
+        const optimized = originalPrompt
+            .replace(/\b(Please|Actually|Very|Can you|I would like you to|exactly|simply)\b/gi, '')
+            .replace(/\s+/g, ' ')
+            .trim();
+        
+        const newTokens = GPTTokenizer_cl100k_base.encode(optimized);
+        input.value = optimized;
+        
+        const viz = document.getElementById('viz');
+        viz.innerHTML = `
+            <div class="viz-label" style="color:var(--danger)">Before Optimization (${oldTokens.length} Tokens)</div>
+            <div id="viz-old" class="viz-sub"></div>
+            <div class="viz-label" style="color:var(--success)">After Optimization (${newTokens.length} Tokens)</div>
+            <div id="viz-new" class="viz-sub"></div>
+        `;
+        
+        renderTokens(oldTokens, "viz-old");
+        renderTokens(newTokens, "viz-new");
+        
+        lastOptimized = true; 
+        calculate();
     }
 
     function renderTokens(tokens, containerId) {
         const container = document.getElementById(containerId);
-        if(!container) return;
-        container.innerHTML = '';
-        tokens.slice(0, 150).forEach((t, i) => {
-            const block = document.createElement('div');
-            block.className = 'token-block';
-            
-            const span = document.createElement('span');
-            span.className = 'token-span';
-            span.style.backgroundColor = `var(--t${(i % 4) + 1})`;
-            span.innerText = GPTTokenizer_cl100k_base.decode([t]);
-            
-            const idTag = document.createElement('span');
-            idTag.className = 'token-id';
-            idTag.innerText = t;
-
-            block.appendChild(span);
-            block.appendChild(idTag);
-            container.appendChild(block);
+        container.innerHTML = tokens.length ? '' : '<small style="color:var(--text-muted)">Tokenization preview...</small>';
+        tokens.slice(0, 100).forEach((t, i) => {
+            const g = document.createElement('div'); g.className = 'token-group';
+            g.innerHTML = `<span class="token-idx">${t}</span><span class="token-span" style="background:var(--t${(i%4)+1})">${GPTTokenizer_cl100k_base.decode([t])}</span>`;
+            container.appendChild(g);
         });
     }
 
     function downloadData() {
         const text = document.getElementById('input').value;
-        if(!text) return alert("Nothing to download!");
-        
         const tokens = GPTTokenizer_cl100k_base.encode(text);
-        const tokenDetails = tokens.map(t => ({ id: t, text: GPTTokenizer_cl100k_base.decode([t]) }));
         
-        const modelCosts = models.map(m => ({
-            name: m.name,
-            input_price_per_1M: m.input,
-            calculated_cost_usd: ((tokens.length / 1000000) * m.input).toFixed(6)
-        }));
-
-        const data = {
-            report_date: new Date().toLocaleString(),
-            prompt_content: text,
-            summary: {
-                total_tokens: tokens.length,
-                budget_limit_usd: document.getElementById('budgetLimit').value
-            },
-            token_breakdown: tokenDetails,
-            model_analysis: modelCosts
+        const exportData = {
+            timestamp: new Date().toISOString(),
+            original_prompt: originalPrompt || text,
+            current_prompt: text,
+            token_count: tokens.length,
+            visualizer_data: tokens.map(t => ({ id: t, part: GPTTokenizer_cl100k_base.decode([t]) })),
+            model_costs: models.map(m => ({
+                model: m.name,
+                calculated_cost: ((tokens.length / 1000000) * m.input).toFixed(6)
+            }))
         };
 
-        const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+        const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
-        a.href = URL.createObjectURL(blob);
-        a.download = `token-report-${Date.now()}.json`;
+        a.href = url;
+        a.download = `token-audit-${Date.now()}.json`;
         a.click();
     }
 
-    // Previous helper functions (History/Clear) remain
-    function optimizePrompt() {
-        const input = document.getElementById('input');
-        if(!input.value) return;
-        const oldTokens = GPTTokenizer_cl100k_base.encode(input.value);
-        const optimized = input.value.replace(/\b(Please|Actually|Very|Simply|Exactly|Can you)\b/gi, '').replace(/\s+/g, ' ').trim();
-        const newTokens = GPTTokenizer_cl100k_base.encode(optimized);
-        input.value = optimized;
-        const viz = document.getElementById('viz');
-        viz.innerHTML = `<div class="viz-label" style="color:var(--danger)">Before (${oldTokens.length})</div><div id="viz-old" class="viz-sub"></div><div class="viz-label" style="color:var(--success)">After (${newTokens.length})</div><div id="viz-new" class="viz-sub"></div>`;
-        renderTokens(oldTokens, "viz-old");
-        renderTokens(newTokens, "viz-new");
-        lastOptimized = true;
-        calculate();
+    function jokeExample() { 
+        resetViz();
+        document.getElementById('input').value = examples[exIdx]; 
+        exIdx = (exIdx + 1) % examples.length; 
+        calculate(); 
+    }
+    
+    function clearEditor() { 
+        resetViz();
+        document.getElementById('input').value = ''; 
+        originalPrompt = "";
+        calculate(); 
     }
 
+    function resetViz() {
+        lastOptimized = null;
+        document.getElementById('viz').innerHTML = '<div id="viz-content"><small style="color:var(--text-muted)">Tokenization preview...</small></div>';
+    }
+    
     function saveToHistory() {
         const txt = document.getElementById('input').value; if(!txt) return;
         const h = JSON.parse(localStorage.getItem('h') || '[]');
@@ -271,11 +311,10 @@
 
     function renderHistory() {
         const h = JSON.parse(localStorage.getItem('h') || '[]');
-        document.getElementById('history-list').innerHTML = h.map(i => `<div style="padding:10px; border-bottom:1px solid var(--border); cursor:pointer;" onclick="document.getElementById('input').value=\`${i.t.replace(/`/g, '\\`')}\`;lastOptimized=false;calculate()">${i.d}: ${i.t.substring(0,20)}...</div>`).join('') || 'No history';
+        document.getElementById('history-list').innerHTML = h.map(i => `<div style="padding:10px; border-bottom:1px solid var(--border); cursor:pointer;" onclick="document.getElementById('input').value=\`${i.t.replace(/`/g, '\\`')}\`;resetViz();calculate()">${i.d}: ${i.t.substring(0,20)}...</div>`).join('') || 'No history';
     }
 
-    function clearHistory() { if(confirm("Clear all?")) { localStorage.removeItem('h'); renderHistory(); } }
-    function clearEditor() { document.getElementById('input').value = ''; lastOptimized = false; document.getElementById('viz').innerHTML = '<div id="viz-content"></div>'; calculate(); }
+    function clearHistory() { if(confirm("Delete history?")) { localStorage.removeItem('h'); renderHistory(); } }
     renderHistory();
 </script>
 </body>
