@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Token Calculator Pro</title>
+    <title>Token Calculator Pro v1.2</title>
     <style>
         :root {
             --sidebar-w: 240px; --brand: #2563eb; --bg-app: #f8fafc;
@@ -17,8 +17,8 @@
             :root { 
                 --bg-app: #0f172a; --card-bg: #1e293b; --text-main: #f1f5f9; 
                 --text-muted: #94a3b8; --border: #334155; --accent-bg: #1e293b; 
-                --t1: rgba(59, 130, 246, 0.3); --t2: rgba(245, 158, 11, 0.3); 
-                --t3: rgba(16, 185, 129, 0.3); --t4: rgba(139, 92, 246, 0.3);
+                --t1: rgba(59, 130, 246, 0.35); --t2: rgba(245, 158, 11, 0.35); 
+                --t3: rgba(16, 185, 129, 0.35); --t4: rgba(139, 92, 246, 0.35);
                 --token-text: #ffffff;
             }
         }
@@ -69,7 +69,7 @@
 
 <aside id="sidebar">
     <div class="sidebar-header">
-        <h3 style="color:var(--brand); margin:0;">Token Calculator</h3>
+        <h3 style="color:var(--brand); margin:0;">Token Calc</h3>
         <button class="menu-btn" onclick="toggleMenu()" style="font-size: 18px;">✕</button>
     </div>
 
@@ -86,7 +86,7 @@
 <div class="main-content">
     <header>
         <button class="menu-btn" onclick="toggleMenu()">☰</button>
-        <h2 style="font-size: 18px; margin: 0;">2026 Calculator Engine</h2>
+        <h2 style="font-size: 18px; margin: 0;">2026 Strategy Engine</h2>
     </header>
 
     <div class="split-container">
@@ -99,7 +99,7 @@
                 </div>
             </div>
 
-            <textarea id="input" placeholder="Type prompt here..." oninput="calculate()">Please write a very long report about why cats are actually secretly in charge of the world.</textarea>
+            <textarea id="input" placeholder="Type prompt here..." oninput="calculate()"></textarea>
             
             <div style="display:flex; gap:8px; flex-wrap: wrap;">
                 <button class="btn btn-success" onclick="optimizePrompt()">⚡ Optimize Prompt</button>
@@ -183,6 +183,7 @@
 
     function optimizePrompt() {
         const input = document.getElementById('input');
+        if(!input.value) return;
         originalPromptText = input.value;
         const oldTokens = GPTTokenizer_cl100k_base.encode(originalPromptText);
         const optimized = originalPromptText.replace(/\b(Please|Actually|Very|Can you|exactly|simply)\b/gi, '').replace(/\s+/g, ' ').trim();
@@ -207,13 +208,11 @@
         container.innerHTML = tokens.length ? '' : '<small>Tokenization preview...</small>';
         tokens.forEach((t, i) => {
             const g = document.createElement('div'); g.className = 'token-group';
-            // FIXED: Now using the actual token ID 't' instead of loop index 'i'
             g.innerHTML = `<span class="token-idx">${t}</span><span class="token-span" style="background:var(--t${(i%4)+1})">${GPTTokenizer_cl100k_base.decode([t])}</span>`;
             container.appendChild(g);
         });
     }
 
-    /* Full Audit Export */
     function downloadData() {
         const text = document.getElementById('input').value;
         const tokens = GPTTokenizer_cl100k_base.encode(text);
@@ -222,8 +221,7 @@
             original: originalPromptText || text,
             current: text,
             token_count: tokens.length,
-            token_ids: tokens,
-            visualizer_dump: tokens.map(t => ({ id: t, text: GPTTokenizer_cl100k_base.decode([t]) })),
+            visualizer_data: tokens.map(t => ({ id: t, text: GPTTokenizer_cl100k_base.decode([t]) })),
             model_costs: models.map(m => ({ model: m.name, cost: ((tokens.length/1000000)*m.input).toFixed(6) }))
         };
         const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
@@ -246,6 +244,7 @@
 
     function clearHistory() { if(confirm("Delete history?")) { localStorage.removeItem('h'); renderHistory(); } }
     function clearEditor() { document.getElementById('input').value = ''; lastOptimized = null; calculate(); }
+    function jokeExample() { document.getElementById('input').value = "Please write a very long report about why cats are actually secretly in charge of the world."; lastOptimized = null; calculate(); }
     renderHistory();
 </script>
 </body>
