@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Token Calculator Pro v1.2.7</title>
+    <title>Token Calculator Pro v1.2.8</title>
     <style>
         :root {
             --sidebar-w: 260px; --brand: #2563eb; --bg-app: #f8fafc;
@@ -23,7 +23,8 @@
             }
         }
         
-        body { margin: 0; font-family: 'Inter', sans-serif; background: var(--bg-app); color: var(--text-main); display: flex; min-height: 100vh; overflow: hidden; }
+        /* Mobile Scroll Fix: Changed overflow-hidden to allow scrolling on body/main */
+        body { margin: 0; font-family: 'Inter', sans-serif; background: var(--bg-app); color: var(--text-main); display: flex; min-height: 100vh; overflow-x: hidden; }
         
         aside { 
             width: var(--sidebar-w); min-width: var(--sidebar-w); background: var(--card-bg); border-right: 1px solid var(--border); 
@@ -36,7 +37,9 @@
         
         .main-content { 
             flex: 1; display: flex; flex-direction: column; width: 100vw; 
-            transition: margin-left 0.3s ease, width 0.3s ease; margin-left: 0; 
+            transition: margin-left 0.3s ease, width 0.3s ease; margin-left: 0;
+            min-height: 100vh; overflow-y: auto; /* Enable vertical scroll */
+            -webkit-overflow-scrolling: touch;
         }
 
         @media (min-width: 1025px) {
@@ -44,10 +47,10 @@
             aside.open { transform: translateX(0); }
         }
 
-        header { height: 60px; background: var(--card-bg); border-bottom: 1px solid var(--border); display: flex; align-items: center; padding: 0 20px; flex-shrink: 0; }
+        header { height: 60px; background: var(--card-bg); border-bottom: 1px solid var(--border); display: flex; align-items: center; padding: 0 20px; flex-shrink: 0; position: sticky; top: 0; z-index: 100; }
         .menu-btn { background: none; border: none; font-size: 24px; cursor: pointer; color: var(--text-main); margin-right: 15px; }
 
-        .split-container { display: grid; grid-template-columns: 1.2fr 1.1fr; gap: 20px; padding: 20px; overflow-y: auto; height: 100%; box-sizing: border-box; }
+        .split-container { display: grid; grid-template-columns: 1.2fr 1.1fr; gap: 20px; padding: 20px; box-sizing: border-box; }
         @media (max-width: 1024px) { .split-container { grid-template-columns: 1fr; } }
 
         .glass-card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 10px; padding: 16px; margin-bottom: 15px; }
@@ -194,7 +197,6 @@
         container.innerHTML = tokens.length ? '' : '<small>Tokenization preview...</small>';
         tokens.slice(0, 100).forEach((t, i) => {
             const g = document.createElement('div'); g.className = 'token-group';
-            // UPDATED: Now shows sequential numbering (1, 2, 3...)
             g.innerHTML = `<span class="token-idx">${i + 1}</span><span class="token-span" style="background:var(--t${(i%4)+1})">${GPTTokenizer_cl100k_base.decode([t])}</span>`;
             container.appendChild(g);
         });
@@ -221,12 +223,27 @@
     function clearEditor() { resetViz(); document.getElementById('input').value = ''; calculate(); }
     function resetViz() { lastOptimized = null; document.getElementById('viz').innerHTML = '<div id="viz-content" class="viz-sub"><small>Tokenization preview...</small></div>'; }
 
+    /* Enhanced Download logic to include all details */
     function downloadData() {
         const text = document.getElementById('input').value;
         const tokens = GPTTokenizer_cl100k_base.encode(text);
-        const data = { timestamp: new Date().toISOString(), prompt: text, token_count: tokens.length, token_ids: tokens };
+        const curr = document.getElementById('curr').value;
+        const rate = curr === 'INR' ? 83.5 : 1;
+        
+        const data = { 
+            timestamp: new Date().toISOString(), 
+            prompt: text, 
+            token_count: tokens.length, 
+            token_ids: tokens,
+            currency: curr,
+            model_costs: models.map(m => ({
+                model: m.name,
+                unit_price_per_m: m.input,
+                calculated_cost: ((tokens.length / 1000000) * m.input * rate).toFixed(6)
+            }))
+        };
         const blob = new Blob([JSON.stringify(data, null, 2)], {type: 'application/json'});
-        const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `audit-${Date.now()}.json`; a.click();
+        const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `token-audit-${Date.now()}.json`; a.click();
     }
 
     function saveToHistory() {
